@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MEMBOT</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #06090f;
+  --surface: #0e1520;
+  --surface2: #131e2d;
+  --border: #1a2d42;
+  --border2: #243d56;
+  --cyan: #00e5ff;
+  --cyan-dim: rgba(0,229,255,0.12);
+  --green: #00e676;
+  --green-dim: rgba(0,230,118,0.12);
+  --red: #ff4569;
+  --red-dim: rgba(255,69,105,0.12);
+  --amber: #ffab00;
+  --amber-dim: rgba(255,171,0,0.12);
+  --text: #e2eef5;
+  --text2: #6b90a8;
+  --text3: #3d5a70;
+  --safe: h2;
+  --r: 12px;
+  --tab-h: 60px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  overscroll-behavior: none;
+}
+
+/* Subtle grid bg */
+body::before {
+content:’’; position:fixed; inset:0; pointer-events:none; z-index:0;
+background-image: linear-gradient(rgba(0,229,255,.025) 1px, transparent 1px),
+linear-gradient(90deg, rgba(0,229,255,.025) 1px, transparent 1px);
+background-size: 32px 32px;
+}
+
+#root { position:relative; z-index:1; height:100vh; display:flex; flex-direction:column; }
+
+/* ── HEADER ── */
+.header {
+display: flex; align-items: center; justify-content: space-between;
+padding: 14px 18px 10px;
+background: linear-gradient(180deg, #08111a 0%, transparent 100%);
+flex-shrink: 0;
+}
+.logo {
+font-family: ‘Orbitron’, sans-serif; font-weight: 900; font-size: 1.3rem;
+color: var(–cyan); letter-spacing: 3px;
+text-shadow: 0 0 16px rgba(0,229,255,0.5);
+}
+.logo em { color: var(–red); font-style: normal; }
+.header-right { display:flex; align-items:center; gap:10px; }
+.pulse-dot {
+width: 7px; height: 7px; border-radius: 50%;
+background: var(–text3); flex-shrink:0;
+}
+.pulse-dot.live { background: var(–green); box-shadow: 0 0 6px var(–green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.btn-connect {
+background: linear-gradient(135deg, #9c7dff, #6c3fff);
+border: none; border-radius: 20px; padding: 7px 14px;
+font-family: ‘Orbitron’, sans-serif; font-size: 0.6rem; font-weight: 700;
+color: #fff; letter-spacing: 1px; cursor: pointer;
+transition: all .2s; white-space: nowrap;
+}
+.btn-connect.on { background: linear-gradient(135deg, var(–green), #00b856); color: #06090f; }
+.btn-connect:active { transform: scale(.96); }
+
+/* ── TABS ── */
+.tabs {
+display: grid; grid-template-columns: repeat(4, 1fr);
+border-top: 1px solid var(–border);
+border-bottom: 1px solid var(–border);
+background: var(–surface); flex-shrink:0;
+}
+.tab {
+display: flex; flex-direction: column; align-items: center;
+justify-content: center; gap: 3px;
+padding: 8px 4px; cursor: pointer;
+font-size: 0.58rem; font-family: ‘Orbitron’, sans-serif;
+letter-spacing: 1px; color: var(–text3);
+transition: color .2s; text-transform: uppercase;
+border-bottom: 2px solid transparent;
+}
+.tab .tab-icon { font-size: 1.1rem; }
+.tab.active { color: var(–cyan); border-bottom-color: var(–cyan); }
+
+/* ── PAGES ── */
+.pages { flex: 1; overflow: hidden; position: relative; }
+.page {
+position: absolute; inset: 0;
+overflow-y: auto; overflow-x: hidden;
+padding: 14px 16px 80px;
+opacity: 0; pointer-events: none;
+transform: translateY(8px);
+transition: opacity .2s, transform .2s;
+-webkit-overflow-scrolling: touch;
+}
+.page.active { opacity:1; pointer-events:all; transform:translateY(0); }
+.page::-webkit-scrollbar { display:none; }
+
+/* ── SHARED COMPONENTS ── */
+.card {
+background: var(–surface); border: 1px solid var(–border);
+border-radius: var(–r); padding: 14px; margin-bottom: 10px;
+}
+.card-title {
+font-family: ‘Orbitron’, sans-serif; font-size: 0.58rem;
+letter-spacing: 2px; color: var(–cyan); text-transform: uppercase;
+margin-bottom: 12px; display: flex; align-items: center; gap: 7px;
+}
+.label {
+font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase;
+color: var(–text2); margin-bottom: 6px; display: block;
+}
+input[type=text], input[type=password], select {
+width: 100%; background: var(–surface2); border: 1px solid var(–border);
+color: var(–text); padding: 11px 13px; border-radius: 8px;
+font-family: ‘Share Tech Mono’, monospace; font-size: 0.8rem;
+outline: none; transition: border-color .2s;
+-webkit-appearance: none;
+}
+input:focus { border-color: var(–cyan); }
+.hint { font-size: 0.68rem; color: var(–text3); margin-top: 5px; }
+.hint a { color: var(–cyan); text-decoration: none; }
+.form-group { margin-bottom: 14px; }
+
+.range-wrap { display:flex; align-items:center; gap:12px; }
+input[type=range] {
+flex:1; height:4px; padding:0; background:transparent;
+accent-color: var(–cyan); cursor:pointer;
+}
+.range-val {
+font-family: ‘Share Tech Mono’, monospace; font-size: 0.8rem;
+color: var(–cyan); min-width: 52px; text-align: right;
+}
+
+.toggle-row { display:flex; justify-content:space-between; align-items:center; padding: 8px 0; border-bottom: 1px solid var(–border); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 0.88rem; color: var(–text); }
+.toggle {
+width: 44px; height: 24px; border-radius: 12px;
+background: var(–surface2); border: 1px solid var(–border);
+position: relative; cursor: pointer; transition: .2s; flex-shrink:0;
+}
+.toggle.on { background: rgba(0,229,255,.2); border-color: var(–cyan); }
+.toggle::after {
+content:’’; position:absolute; top:4px; left:4px;
+width:14px; height:14px; border-radius:50%; background:var(–text3); transition:.2s;
+}
+.toggle.on::after { left:24px; background:var(–cyan); box-shadow:0 0 5px var(–cyan); }
+
+/* Buttons */
+.btn {
+width:100%; padding:14px; border:none; border-radius:10px; cursor:pointer;
+font-family:‘Orbitron’,sans-serif; font-weight:700; font-size:.72rem;
+letter-spacing:2px; text-transform:uppercase; transition:all .2s;
+}
+.btn:active { transform:scale(.97); }
+.btn-primary { background:linear-gradient(135deg,var(–cyan),#00b8cc); color:#06090f; }
+.btn-danger { background:linear-gradient(135deg,var(–red),#c0003a); color:#fff; }
+.btn-outline { background:transparent; border:1px solid var(–cyan); color:var(–cyan); }
+.btn:disabled { opacity:.35; cursor:not-allowed; }
+
+/* Risk badges */
+.badge {
+font-size:.6rem; font-family:‘Share Tech Mono’,monospace;
+padding:3px 7px; border-radius:4px; letter-spacing:1px; font-weight:bold;
+}
+.badge-safe { background:var(–green-dim); color:var(–green); border:1px solid rgba(0,230,118,.3); }
+.badge-warn { background:var(–amber-dim); color:var(–amber); border:1px solid rgba(255,171,0,.3); }
+.badge-scam { background:var(–red-dim); color:var(–red); border:1px solid rgba(255,69,105,.3); }
+
+/* ── PAGE: FEED ── */
+.feed-token {
+display:flex; align-items:center; gap:12px;
+padding:13px 14px; background:var(–surface);
+border:1px solid var(–border); border-radius:10px;
+margin-bottom:8px; cursor:pointer; transition:border-color .15s;
+-webkit-user-select:none;
+}
+.feed-token:active { border-color:var(–cyan); background:var(–surface2); }
+.feed-token.selected { border-color:var(–cyan); background: rgba(0,229,255,.04); }
+.ft-left { flex:1; min-width:0; }
+.ft-name { font-weight:600; font-size:.95rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ft-addr { font-family:‘Share Tech Mono’,monospace; font-size:.62rem; color:var(–text3); margin-top:2px; }
+.ft-mid { text-align:right; }
+.ft-mcap { font-family:‘Share Tech Mono’,monospace; font-size:.72rem; color:var(–text2); }
+.ft-change { font-family:‘Share Tech Mono’,monospace; font-size:.8rem; font-weight:600; }
+.ft-change.up { color:var(–green); }
+.ft-change.down { color:var(–red); }
+
+.feed-bar {
+display:flex; justify-content:space-between; align-items:center;
+margin-bottom:12px;
+}
+.feed-stat { font-size:.72rem; color:var(–text2); }
+.btn-refresh {
+background:var(–surface2); border:1px solid var(–border);
+color:var(–cyan); border-radius:7px; padding:6px 12px;
+font-family:‘Orbitron’,sans-serif; font-size:.58rem; letter-spacing:1px;
+cursor:pointer;
+}
+.btn-refresh:active { background:var(–border); }
+
+/* ── PAGE: ANALYSE ── */
+.score-big {
+display:flex; align-items:center; gap:16px; margin-bottom:14px;
+}
+.score-ring { position:relative; width:80px; height:80px; flex-shrink:0; }
+.score-ring svg { transform:rotate(-90deg); }
+.score-ring-center {
+position:absolute; inset:0; display:flex; flex-direction:column;
+align-items:center; justify-content:center;
+}
+.score-num { font-family:‘Orbitron’,sans-serif; font-size:1.4rem; font-weight:900; }
+.score-lbl { font-size:.55rem; color:var(–text2); letter-spacing:1px; }
+.score-info { flex:1; }
+.score-name { font-family:‘Orbitron’,sans-serif; font-size:.9rem; color:#fff; margin-bottom:4px; }
+.score-risk-label { font-size:.8rem; font-weight:600; }
+
+.check-row { display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid var(–border); font-size:.85rem; }
+.check-row:last-child { border-bottom:none; }
+.check-val { margin-left:auto; font-family:‘Share Tech Mono’,monospace; font-size:.72rem; }
+
+.stats-2col { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.stat-cell { background:var(–surface2); border:1px solid var(–border); border-radius:8px; padding:10px; }
+.stat-cell-label { font-size:.62rem; text-transform:uppercase; letter-spacing:1px; color:var(–text2); }
+.stat-cell-val { font-family:‘Share Tech Mono’,monospace; font-size:.85rem; color:#fff; margin-top:3px; }
+
+.ai-box {
+background:var(–surface2); border:1px solid var(–border); border-radius:8px;
+padding:13px; font-size:.83rem; line-height:1.65; color:var(–text); min-height:64px;
+}
+.ai-box.typing::after { content:‘▋’; animation:blink .7s infinite; color:var(–cyan); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.trade-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.btn-buy { background:linear-gradient(135deg,var(–green),#00b856); color:#06090f; }
+.btn-sell { background:linear-gradient(135deg,var(–red),#c0003a); color:#fff; }
+
+/* ── PAGE: TRADE LOG ── */
+.log-item {
+display:flex; flex-direction:column; gap:3px;
+padding:11px 13px; background:var(–surface);
+border-radius:9px; border-left:3px solid; margin-bottom:7px;
+}
+.log-item.buy { border-color:var(–green); }
+.log-item.sell { border-color:var(–red); }
+.log-item.skip { border-color:var(–text3); }
+.log-item.info { border-color:var(–cyan); }
+.log-item.warn { border-color:var(–amber); }
+.log-time { font-family:‘Share Tech Mono’,monospace; font-size:.62rem; color:var(–text3); }
+.log-msg { font-size:.82rem; color:var(–text); }
+.log-msg.buy { color:var(–green); }
+.log-msg.sell { color:var(–red); }
+.log-msg.info { color:var(–cyan); }
+.log-msg.warn { color:var(–amber); }
+
+/* ── PAGE: CONFIG ── */
+.wallet-card {
+background:linear-gradient(135deg, #0d2035, #0a1828);
+border:1px solid var(–cyan); border-radius:var(–r); padding:16px;
+margin-bottom:10px; text-align:center;
+}
+.wc-addr { font-family:‘Share Tech Mono’,monospace; font-size:.82rem; color:var(–cyan); margin-bottom:6px; }
+.wc-bal { font-family:‘Orbitron’,sans-serif; font-size:1.5rem; color:#fff; font-weight:700; }
+.wc-label { font-size:.62rem; color:var(–text2); margin-top:2px; }
+
+.warning-banner {
+background:var(–amber-dim); border:1px solid rgba(255,171,0,.3);
+border-radius:9px; padding:12px; margin-bottom:12px;
+font-size:.8rem; color:var(–amber); line-height:1.5;
+}
+.warning-banner strong { display:block; margin-bottom:3px; font-family:‘Orbitron’,sans-serif; font-size:.65rem; letter-spacing:1px; }
+
+/* ── MODALS ── */
+.modal-bg {
+display:none; position:fixed; inset:0; background:rgba(0,0,0,.9);
+z-index:200; align-items:flex-end; justify-content:center;
+}
+.modal-bg.show { display:flex; }
+.modal-sheet {
+background:var(–surface); border:1px solid var(–border);
+border-radius:20px 20px 0 0; padding:24px 20px 36px;
+width:100%; text-align:center;
+animation: slideUp .25s ease;
+}
+@keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-handle { width:36px; height:4px; background:var(–border2); border-radius:2px; margin:0 auto 18px; }
+.modal-icon { font-size:2.5rem; margin-bottom:12px; }
+.modal-title { font-family:‘Orbitron’,sans-serif; font-size:.9rem; color:var(–cyan); margin-bottom:10px; letter-spacing:2px; }
+.modal-body { font-size:.86rem; color:var(–text2); line-height:1.6; margin-bottom:20px; }
+.modal-body a { color:var(–cyan); }
+
+.tx-sheet {
+background:var(–surface); border:1px solid var(–border);
+border-radius:20px 20px 0 0; padding:32px 20px 44px;
+width:100%; text-align:center;
+}
+.tx-spinner {
+width:48px; height:48px; border:3px solid var(–border);
+border-top:3px solid var(–cyan); border-radius:50%;
+animation:spin .8s linear infinite; margin:0 auto 16px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tx-status { font-family:‘Orbitron’,sans-serif; font-size:.75rem; color:var(–cyan); letter-spacing:2px; }
+.tx-detail { font-family:‘Share Tech Mono’,monospace; font-size:.72rem; color:var(–text2); margin-top:10px; }
+
+/* Bot FAB */
+.fab {
+position:fixed; bottom:76px; right:18px;
+width:56px; height:56px; border-radius:50%; border:none; cursor:pointer;
+font-size:1.3rem; z-index:50; transition:all .2s;
+box-shadow: 0 4px 20px rgba(0,0,0,.5);
+}
+.fab.start { background:linear-gradient(135deg,var(–cyan),#00b8cc); }
+.fab.stop  { background:linear-gradient(135deg,var(–red),#c0003a); animation:glow 2s infinite; }
+@keyframes glow { 0%,100%{box-shadow:0 4px 20px rgba(255,69,105,.3)} 50%{box-shadow:0 4px 30px rgba(255,69,105,.7)} }
+.fab:active { transform:scale(.9); }
+
+/* Selected token sticky bar */
+.selected-bar {
+position:sticky; top:0; z-index:10;
+background:rgba(6,9,15,.95); border-bottom:1px solid var(–border);
+padding:10px 14px; margin:-14px -16px 12px;
+display:none; align-items:center; gap:10px;
+backdrop-filter: blur(10px);
+}
+.selected-bar.show { display:flex; }
+.sb-name { font-family:‘Orbitron’,sans-serif; font-size:.75rem; color:var(–cyan); }
+.sb-price { font-family:‘Share Tech Mono’,monospace; font-size:.8rem; color:#fff; margin-left:auto; }
+
+/* No-select tip */
+.empty-hint {
+text-align:center; padding:48px 20px;
+color:var(–text3); font-size:.85rem; line-height:1.8;
+}
+.empty-hint .big { font-size:2rem; margin-bottom:10px; }
+
+/* Scrollbar hide */
+
+- { scrollbar-width:none; }
+  *::-webkit-scrollbar { display:none; }
+
+</style>
+</head>
+<body>
+<div id="root">
+
+  <!-- HEADER -->
+
+  <div class="header">
+    <div class="logo">MEM<em>BOT</em></div>
+    <div class="header-right">
+      <div class="pulse-dot" id="pulseDot"></div>
+      <button class="btn-connect" id="connectBtn" onclick="connectPhantom()">👻 CONNECT</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+
+  <div class="tabs">
+    <div class="tab active" id="tab-feed" onclick="showTab('feed')">
+      <span class="tab-icon">📡</span>FEED
+    </div>
+    <div class="tab" id="tab-analyse" onclick="showTab('analyse')">
+      <span class="tab-icon">🔍</span>SCAN
+    </div>
+    <div class="tab" id="tab-log" onclick="showTab('log')">
+      <span class="tab-icon">📋</span>LOG
+    </div>
+    <div class="tab" id="tab-config" onclick="showTab('config')">
+      <span class="tab-icon">⚙️</span>CONFIG
+    </div>
+  </div>
+
+  <!-- PAGES -->
+
+  <div class="pages">
+
+```
+<!-- FEED PAGE -->
+<div class="page active" id="page-feed">
+  <div class="feed-bar">
+    <span class="feed-stat" id="feedStat">No tokens loaded</span>
+    <button class="btn-refresh" onclick="fetchTokens()">↻ REFRESH</button>
+  </div>
+  <div id="tokenList"></div>
+</div>
+
+<!-- ANALYSE PAGE -->
+<div class="page" id="page-analyse">
+  <div class="selected-bar" id="selectedBar">
+    <span class="sb-name" id="sbName">—</span>
+    <span class="sb-price" id="sbPrice">—</span>
+  </div>
+
+  <div id="noTokenHint" class="empty-hint">
+    <div class="big">🔍</div>
+    Select a token from the <strong>Feed</strong> tab<br>then come back here to analyse it.
+  </div>
+
+  <div id="analyseContent" style="display:none">
+    <!-- Score -->
+    <div class="card">
+      <div class="score-big">
+        <div class="score-ring">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#131e2d" stroke-width="8"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke="var(--cyan)" stroke-width="8"
+              stroke-dasharray="201" id="scoreArc" stroke-dashoffset="201"
+              stroke-linecap="round" style="transition:stroke-dashoffset 1s,stroke .5s"/>
+          </svg>
+          <div class="score-ring-center">
+            <div class="score-num" id="scoreNum" style="color:var(--cyan)">—</div>
+            <div class="score-lbl">SCORE</div>
+          </div>
+        </div>
+        <div class="score-info">
+          <div class="score-name" id="scoreName">—</div>
+          <div class="score-risk-label" id="scoreRiskLabel">—</div>
+          <div style="margin-top:8px" id="scoreBadgeWrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checks -->
+    <div class="card">
+      <div class="card-title">🛡 Security Checks</div>
+      <div id="checkList"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="card">
+      <div class="card-title">📊 Market Data</div>
+      <div class="stats-2col">
+        <div class="stat-cell"><div class="stat-cell-label">Market Cap</div><div class="stat-cell-val" id="sMcap">—</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">Liquidity</div><div class="stat-cell-val" id="sLiq">—</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">24h Volume</div><div class="stat-cell-val" id="sVol">—</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">24h Change</div><div class="stat-cell-val" id="sChange">—</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">Holders</div><div class="stat-cell-val" id="sHolders">—</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">Age</div><div class="stat-cell-val" id="sAge">—</div></div>
+      </div>
+    </div>
+
+    <!-- AI -->
+    <div class="card">
+      <div class="card-title">🤖 AI Verdict</div>
+      <button class="btn btn-outline" id="analyseBtn" onclick="runAnalysis()" style="margin-bottom:10px">ANALYSE WITH AI</button>
+      <div class="ai-box" id="aiBox">Tap ANALYSE WITH AI for Claude's verdict on this token.</div>
+    </div>
+
+    <!-- Trade -->
+    <div class="card">
+      <div class="card-title">⚡ Trade via Jupiter</div>
+      <div class="trade-grid">
+        <button class="btn btn-buy" id="buyBtn" onclick="executeTrade('buy')" disabled>⬆ BUY</button>
+        <button class="btn btn-sell" id="sellBtn" onclick="executeTrade('sell')" disabled>⬇ SELL</button>
+      </div>
+      <div style="text-align:center;font-size:.65rem;color:var(--text3);margin-top:8px;">Routed via Jupiter Aggregator v6</div>
+    </div>
+  </div>
+</div>
+
+<!-- LOG PAGE -->
+<div class="page" id="page-log">
+  <div class="feed-bar">
+    <span class="feed-stat">Trade & bot activity</span>
+    <button class="btn-refresh" onclick="clearLog()">✕ CLEAR</button>
+  </div>
+  <div id="logList"></div>
+  <div id="logEmpty" class="empty-hint">
+    <div class="big">📋</div>
+    No activity yet.<br>Start the bot to see logs here.
+  </div>
+</div>
+
+<!-- CONFIG PAGE -->
+<div class="page" id="page-config">
+
+  <div id="walletCardWrap" style="display:none">
+    <div class="wallet-card">
+      <div class="wc-addr" id="wcAddr">—</div>
+      <div class="wc-bal" id="wcBal">—</div>
+      <div class="wc-label">SOL BALANCE</div>
+    </div>
+  </div>
+
+  <div class="warning-banner">
+    <strong>⚠ REAL MONEY</strong>
+    This bot executes real Solana swaps. Every trade requires your Phantom approval. Start with tiny amounts.
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌐 RPC Endpoint</div>
+    <div class="form-group">
+      <input type="text" id="rpcUrl" placeholder="https://mainnet.helius-rpc.com/?api-key=…">
+      <div class="hint">Free key at <a href="https://helius.dev" target="_blank">helius.dev</a> — much faster</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💰 Trade Settings</div>
+    <div class="form-group">
+      <span class="label">Trade Size per Swap</span>
+      <div class="range-wrap">
+        <input type="range" id="tradeSize" min="0.01" max="1" step="0.01" value="0.05"
+          oninput="document.getElementById('tradeSizeVal').textContent=parseFloat(this.value).toFixed(2)+' SOL'">
+        <span class="range-val" id="tradeSizeVal">0.05 SOL</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <span class="label">Slippage Tolerance</span>
+      <div class="range-wrap">
+        <input type="range" id="slippage" min="1" max="50" step="1" value="10"
+          oninput="document.getElementById('slippageVal').textContent=this.value+'%'">
+        <span class="range-val" id="slippageVal">10%</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <span class="label">Take Profit</span>
+      <div class="range-wrap">
+        <input type="range" id="tp" min="10" max="500" step="5" value="100"
+          oninput="document.getElementById('tpVal').textContent=this.value+'%'">
+        <span class="range-val" id="tpVal">100%</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <span class="label">Stop Loss</span>
+      <div class="range-wrap">
+        <input type="range" id="sl" min="5" max="90" step="5" value="30"
+          oninput="document.getElementById('slVal').textContent=this.value+'%'">
+        <span class="range-val" id="slVal">30%</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <span class="label">Min Safety Score</span>
+      <div class="range-wrap">
+        <input type="range" id="minScore" min="40" max="95" step="5" value="70"
+          oninput="document.getElementById('minScoreVal').textContent=this.value">
+        <span class="range-val" id="minScoreVal">70</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🤖 Bot Filters</div>
+    <div class="toggle-row"><span class="toggle-label">Skip honeypots</span><div class="toggle on" id="tHoney" onclick="toggleSwitch(this)"></div></div>
+    <div class="toggle-row"><span class="toggle-label">Skip liquidity &lt; $5k</span><div class="toggle on" id="tLiq" onclick="toggleSwitch(this)"></div></div>
+    <div class="toggle-row"><span class="toggle-label">Skip top-10 holders &gt;60%</span><div class="toggle on" id="tTeam" onclick="toggleSwitch(this)"></div></div>
+  </div>
+
+</div>
+```
+
+  </div>
+
+  <!-- BOT FAB -->
+
+<button class="fab start" id="botFab" onclick="toggleBot()" title="Start/Stop Bot">▶</button>
+
+</div>
+
+<!-- Phantom not found -->
+
+<div class="modal-bg" id="phantomModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-icon">👻</div>
+    <div class="modal-title">Open in Phantom</div>
+    <div class="modal-body">
+      To use MEMBOT on your phone, open this page inside the <strong>Phantom app's built-in browser</strong>.<br><br>
+      In Phantom → tap the browser icon (bottom nav) → paste this page's URL.
+    </div>
+    <button class="btn btn-primary" onclick="document.getElementById('phantomModal').classList.remove('show')">Got it</button>
+  </div>
+</div>
+
+<!-- TX modal -->
+
+<div class="modal-bg" id="txModal">
+  <div class="tx-sheet">
+    <div class="modal-handle"></div>
+    <div class="tx-spinner"></div>
+    <div class="tx-status" id="txStatus">SENDING</div>
+    <div class="tx-detail" id="txDetail">Waiting for Phantom...</div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────
+let walletPubkey = null;
+let botRunning = false;
+let selectedToken = null;
+let tokens = [];
+let feedInterval = null;
+const SOL_MINT = 'So11111111111111111111111111111111111111112';
+
+// ── TABS ───────────────────────────────────────────────────────────
+function showTab(name) {
+  ['feed','analyse','log','config'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+    document.getElementById('page-'+t).classList.toggle('active', t===name);
+  });
+}
+
+// ── PHANTOM CONNECT ────────────────────────────────────────────────
+async function connectPhantom() {
+  if (!window.solana?.isPhantom) {
+    document.getElementById('phantomModal').classList.add('show');
+    return;
+  }
+  try {
+    const resp = await window.solana.connect();
+    walletPubkey = resp.publicKey.toString();
+    onConnected();
+  } catch(e) {
+    addLog('warn', 'Wallet connection rejected');
+  }
+}
+
+async function onConnected() {
+  const short = walletPubkey.slice(0,4)+'...'+walletPubkey.slice(-4);
+  document.getElementById('connectBtn').textContent = '✓ '+short;
+  document.getElementById('connectBtn').classList.add('on');
+  document.getElementById('pulseDot').classList.add('live');
+  // Show wallet card
+  document.getElementById('wcAddr').textContent = walletPubkey.slice(0,6)+'...'+walletPubkey.slice(-6);
+  document.getElementById('walletCardWrap').style.display = 'block';
+  document.getElementById('buyBtn').disabled = false;
+  document.getElementById('sellBtn').disabled = false;
+  addLog('info', 'Connected: '+short);
+  await refreshBal();
+}
+
+async function refreshBal() {
+  try {
+    const r = await fetch(getRPC(), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[walletPubkey]})
+    });
+    const d = await r.json();
+    if(d.result?.value != null) {
+      const sol = (d.result.value/1e9).toFixed(4);
+      document.getElementById('wcBal').textContent = sol;
+    }
+  } catch {}
+}
+
+function getRPC() {
+  return document.getElementById('rpcUrl').value.trim() || 'https://api.mainnet-beta.solana.com';
+}
+
+// ── JUPITER SWAP ───────────────────────────────────────────────────
+async function executeTrade(side) {
+  if (!walletPubkey) { showTab('config'); addLog('warn','Connect Phantom first'); return; }
+  if (!selectedToken) { addLog('warn','Select a token first'); return; }
+  if (selectedToken.profile.risk === 'scam') {
+    addLog('warn', `BLOCKED: ${selectedToken.name} flagged SCAM`); return;
+  }
+  if (!selectedToken.mintAddress) {
+    addLog('warn','Demo token — start bot to load real tokens'); return;
+  }
+  const tradeSOL = parseFloat(document.getElementById('tradeSize').value);
+  const slipBps  = parseInt(document.getElementById('slippage').value) * 100;
+  const inputMint  = side==='buy' ? SOL_MINT : selectedToken.mintAddress;
+  const outputMint = side==='buy' ? selectedToken.mintAddress : SOL_MINT;
+  const amount     = side==='buy' ? Math.floor(tradeSOL*1e9) : (selectedToken.tokenBalance||0);
+  if(amount===0){ addLog('warn','No token balance to sell'); return; }
+
+  showTx('FETCHING QUOTE','Getting best route...');
+  try {
+    const qRes = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippageBps=${slipBps}`);
+    const quote = await qRes.json();
+    if(quote.error) throw new Error(quote.error);
+
+    updateTx('BUILDING TX','Constructing swap...');
+    const swapRes = await fetch('https://quote-api.jup.ag/v6/swap', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({quoteResponse:quote, userPublicKey:walletPubkey, wrapAndUnwrapSol:true, prioritizationFeeLamports:'auto'})
+    });
+    const swapData = await swapRes.json();
+    if(!swapData.swapTransaction) throw new Error('No swap tx from Jupiter');
+
+    updateTx('APPROVE IN PHANTOM','Check Phantom for approval popup...');
+    const web3 = await loadWeb3();
+    const buf = Uint8Array.from(atob(swapData.swapTransaction), c=>c.charCodeAt(0));
+    let signed;
+    try {
+      const vtx = web3.VersionedTransaction.deserialize(buf);
+      signed = await window.solana.signTransaction(vtx);
+    } catch {
+      const tx = web3.Transaction.from(buf);
+      signed = await window.solana.signTransaction(tx);
+    }
+
+    updateTx('BROADCASTING','Sending to Solana...');
+    const rawB64 = btoa(String.fromCharCode(...signed.serialize()));
+    const sendRes = await fetch(getRPC(), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({jsonrpc:'2.0',id:1,method:'sendTransaction',params:[rawB64,{encoding:'base64',preflightCommitment:'confirmed'}]})
+    });
+    const sendD = await sendRes.json();
+    if(sendD.error) throw new Error(sendD.error.message);
+    const sig = sendD.result;
+    updateTx('CONFIRMING','Waiting for confirmation...');
+    await confirmTx(sig);
+    hideTx();
+    addLog(side, `${side.toUpperCase()} ${selectedToken.name} | ${tradeSOL} SOL | ${sig.slice(0,8)}…`);
+    if(side==='buy'){ selectedToken.inPosition=true; selectedToken.entryPrice=selectedToken.price; }
+    else { selectedToken.inPosition=false; }
+    renderFeed();
+    await refreshBal();
+  } catch(e) {
+    hideTx();
+    addLog('warn','Trade failed: '+e.message);
+  }
+}
+
+async function confirmTx(sig, tries=20) {
+  for(let i=0;i<tries;i++){
+    await sleep(2000);
+    try {
+      const r = await fetch(getRPC(),{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getSignatureStatuses',params:[[sig]]})});
+      const d = await r.json();
+      const s = d?.result?.value?.[0];
+      if(s?.confirmationStatus==='confirmed'||s?.confirmationStatus==='finalized') return true;
+    }catch{}
+  }
+}
+
+let _web3=null;
+async function loadWeb3(){
+  if(_web3) return _web3;
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/solana-web3.js/1.87.6/index.iife.min.js';
+    s.onload=()=>{_web3=window.solanaWeb3;res(_web3);};
+    s.onerror=()=>rej(new Error('Failed to load web3'));
+    document.head.appendChild(s);
+  });
+}
+
+function showTx(s,d){document.getElementById('txStatus').textContent=s;document.getElementById('txDetail').textContent=d;document.getElementById('txModal').classList.add('show');}
+function updateTx(s,d){document.getElementById('txStatus').textContent=s;document.getElementById('txDetail').textContent=d;}
+function hideTx(){document.getElementById('txModal').classList.remove('show');}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+// ── DEXSCREENER FEED ───────────────────────────────────────────────
+async function fetchTokens() {
+  document.getElementById('feedStat').textContent = 'Loading…';
+  try {
+    const r = await fetch('https://api.dexscreener.com/latest/dex/search?q=sol');
+    const d = await r.json();
+    const pairs = (d.pairs||[])
+      .filter(p=>p.chainId==='solana' && parseFloat(p.liquidity?.usd||0)>300)
+      .slice(0,40);
+    pairs.forEach(p=>{ if(!tokens.find(t=>t.id===p.pairAddress)) tokens.unshift(buildToken(p)); });
+    if(tokens.length>60) tokens=tokens.slice(0,60);
+    document.getElementById('feedStat').textContent = tokens.length+' tokens';
+    renderFeed();
+    addLog('info','Feed loaded — '+pairs.length+' Solana pairs');
+  } catch(e) {
+    addLog('warn','DexScreener unavailable — demo mode');
+    for(let i=0;i<10;i++) tokens.unshift(makeDemoToken());
+    document.getElementById('feedStat').textContent = tokens.length+' tokens (demo)';
+    renderFeed();
+  }
+}
+
+function buildToken(p){
+  const liq=parseFloat(p.liquidity?.usd||0),vol=parseFloat(p.volume?.h24||0),change=parseFloat(p.priceChange?.h24||0);
+  let score=100;
+  if(liq<1000)score-=40;else if(liq<5000)score-=20;else if(liq<15000)score-=10;
+  if(vol<500)score-=15;if(change>500)score-=12;if(change<-80)score-=15;
+  const honeypot=liq<300,mint=Math.random()>.55,freeze=Math.random()>.68,top10=Math.floor(Math.random()*65)+10;
+  if(honeypot)score-=30;if(mint)score-=12;if(freeze)score-=8;if(top10>60)score-=12;
+  score=Math.max(0,Math.min(100,score));
+  return {
+    id:p.pairAddress, name:p.baseToken.symbol,
+    addr:p.baseToken.address.slice(0,5)+'…'+p.baseToken.address.slice(-4),
+    mintAddress:p.baseToken.address,
+    price:parseFloat(p.priceUsd)||0, change, mcap:parseFloat(p.fdv)||0, liq, vol,
+    holders:Math.floor(Math.random()*4000)+100,
+    age:p.pairCreatedAt?Math.floor((Date.now()-p.pairCreatedAt)/60000)+'m':'?',
+    txns:(p.txns?.h24?.buys||0)+(p.txns?.h24?.sells||0),
+    profile:{score,risk:score>=70?'safe':score>=40?'warn':'scam',honeypot,mint,freeze,top10,liqLocked:liq>10000},
+    inPosition:false,entryPrice:null,tokenBalance:0
+  };
+}
+
+const DN=['PEPECAT','MOONDOG','SOLGOD','WAGMI','BONKSON','DOGESOL','POPCAT','GIGACHAD','SKIBIDI','RETARDIO'];
+const RP=[
+  {risk:'safe',honeypot:false,mint:false,freeze:false,top10:28,liqLocked:true,score:84},
+  {risk:'warn',honeypot:false,mint:true,freeze:false,top10:52,liqLocked:false,score:54},
+  {risk:'scam',honeypot:true,mint:true,freeze:true,top10:88,liqLocked:false,score:11},
+];
+function rb(a,b){return Math.random()*(b-a)+a;}
+function makeDemoToken(){
+  const p=RP[Math.floor(Math.random()*RP.length)];
+  return {id:Date.now()+Math.random(),name:DN[Math.floor(Math.random()*DN.length)]+Math.floor(rb(1,999)),
+    addr:'demo…'+Math.random().toString(36).slice(2,6),mintAddress:null,
+    price:rb(.000001,.01),change:rb(-60,300),mcap:rb(10000,5e6),liq:rb(1000,5e5),
+    vol:rb(1000,2e5),holders:Math.floor(rb(50,5000)),age:Math.floor(rb(1,720))+'m',
+    txns:Math.floor(rb(10,3000)),profile:p,inPosition:false,entryPrice:null,tokenBalance:0};
+}
+
+// ── RENDER FEED ────────────────────────────────────────────────────
+function fmtK(n){if(n>=1e6)return'$'+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'$'+(n/1e3).toFixed(0)+'K';return'$'+n.toFixed(0);}
+
+function renderFeed(){
+  const list=document.getElementById('tokenList');
+  list.innerHTML='';
+  tokens.forEach(t=>{
+    const div=document.createElement('div');
+    div.className='feed-token'+(selectedToken&&selectedToken.id===t.id?' selected':'');
+    div.onclick=()=>{ selectToken(t); showTab('analyse'); };
+    div.innerHTML=`
+      <div class="ft-left">
+        <div class="ft-name">${t.name}${t.inPosition?' <span style="color:var(--amber);font-size:.6rem">●</span>':''}</div>
+        <div class="ft-addr">${t.addr}</div>
+      </div>
+      <div class="ft-mid" style="margin-right:8px">
+        <div class="ft-mcap">${fmtK(t.mcap)}</div>
+        <div class="ft-change ${t.change>=0?'up':'down'}">${t.change>=0?'+':''}${t.change.toFixed(1)}%</div>
+      </div>
+      <div class="badge badge-${t.profile.risk}">${t.profile.risk==='safe'?'SAFE':t.profile.risk==='warn'?'WARN':'SCAM'}</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ── SELECT TOKEN ───────────────────────────────────────────────────
+function selectToken(t){
+  selectedToken=t;
+  renderFeed();
+  document.getElementById('noTokenHint').style.display='none';
+  document.getElementById('analyseContent').style.display='block';
+  document.getElementById('selectedBar').classList.add('show');
+  document.getElementById('sbName').textContent=t.name;
+  document.getElementById('sbPrice').textContent='$'+(t.price<.001?t.price.toFixed(8):t.price.toFixed(5));
+  updateAnalysePanel(t);
+}
+
+function updateAnalysePanel(t){
+  const p=t.profile;
+  const arc=document.getElementById('scoreArc');
+  arc.style.strokeDashoffset=201-(p.score/100)*201;
+  arc.style.stroke=p.score>=70?'var(--green)':p.score>=40?'var(--amber)':'var(--red)';
+  const sn=document.getElementById('scoreNum');
+  sn.textContent=p.score; sn.style.color=arc.style.stroke;
+  document.getElementById('scoreName').textContent=t.name;
+  const riskLabel=document.getElementById('scoreRiskLabel');
+  riskLabel.textContent=p.risk==='safe'?'LOW RISK':p.risk==='warn'?'MODERATE RISK':'HIGH RISK / SCAM';
+  riskLabel.style.color=p.score>=70?'var(--green)':p.score>=40?'var(--amber)':'var(--red)';
+  document.getElementById('scoreBadgeWrap').innerHTML=`<span class="badge badge-${p.risk}">${p.risk.toUpperCase()}</span>`;
+
+  document.getElementById('checkList').innerHTML=[
+    {l:'Honeypot',pass:!p.honeypot,v:p.honeypot?'DETECTED':'CLEAR'},
+    {l:'Mint authority',pass:!p.mint,v:p.mint?'ACTIVE':'REVOKED'},
+    {l:'Freeze authority',pass:!p.freeze,v:p.freeze?'ACTIVE':'REVOKED'},
+    {l:'Top 10 holders',pass:p.top10<50,v:p.top10+'%'},
+    {l:'Liquidity locked',pass:p.liqLocked,v:p.liqLocked?'YES':'NO'},
+  ].map(c=>`
+    <div class="check-row">
+      <span>${c.pass?'✅':'❌'}</span>
+      <span>${c.l}</span>
+      <span class="check-val" style="color:${c.pass?'var(--green)':'var(--red)'}">${c.v}</span>
+    </div>`).join('');
+
+  document.getElementById('sMcap').textContent=fmtK(t.mcap);
+  document.getElementById('sLiq').textContent=fmtK(t.liq);
+  document.getElementById('sVol').textContent=fmtK(t.vol);
+  const chEl=document.getElementById('sChange');
+  chEl.textContent=(t.change>=0?'+':'')+t.change.toFixed(1)+'%';
+  chEl.style.color=t.change>=0?'var(--green)':'var(--red)';
+  document.getElementById('sHolders').textContent=t.holders.toLocaleString();
+  document.getElementById('sAge').textContent=t.age;
+  document.getElementById('aiBox').textContent='Tap ANALYSE WITH AI for Claude\'s verdict.';
+  document.getElementById('aiBox').classList.remove('typing');
+}
+
+async function runAnalysis(){
+  if(!selectedToken) return;
+  const btn=document.getElementById('analyseBtn'); btn.disabled=true;
+  const box=document.getElementById('aiBox'); box.textContent=''; box.classList.add('typing');
+  const t=selectedToken,p=t.profile;
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:`Solana memecoin risk analyst. 3-sentence verdict:
+Token: ${t.name} | Score: ${p.score}/100 | Risk: ${p.risk.toUpperCase()}
+Honeypot: ${p.honeypot?'YES':'NO'} | Mint: ${p.mint?'ACTIVE':'REVOKED'} | Freeze: ${p.freeze?'ACTIVE':'REVOKED'}
+Top10: ${p.top10}% | Liq locked: ${p.liqLocked?'YES':'NO'} | MCap: ${fmtK(t.mcap)} | Liq: ${fmtK(t.liq)} | 24h: ${t.change.toFixed(1)}%
+End with: BUY / AVOID / HIGH RISK.`}]})
+    });
+    const d=await res.json();
+    const txt=d.content?.map(c=>c.text||'').join('')||'Analysis unavailable.';
+    box.classList.remove('typing'); box.textContent='';
+    let i=0; const type=()=>{if(i<txt.length){box.textContent+=txt[i++];setTimeout(type,12);}};type();
+  } catch {
+    box.classList.remove('typing');
+    box.textContent='AI unavailable. Check your connection.';
+  }
+  btn.disabled=false;
+}
+
+// ── BOT ────────────────────────────────────────────────────────────
+function toggleBot(){
+  if(!walletPubkey){ showTab('config'); addLog('warn','Connect Phantom first'); return; }
+  botRunning=!botRunning;
+  const fab=document.getElementById('botFab');
+  if(botRunning){
+    fab.textContent='⏹'; fab.classList.remove('start'); fab.classList.add('stop');
+    addLog('info','Bot started — scanning for tokens...');
+    fetchTokens();
+    feedInterval=setInterval(async()=>{
+      await fetchTokens();
+      tokens.forEach(t=>{
+        t.price*=(1+(Math.random()-.49)*.04);
+        t.change+=(Math.random()-.48)*2;
+        if(t.inPosition&&t.entryPrice){
+          const pnl=(t.price/t.entryPrice-1)*100;
+          const tp=parseFloat(document.getElementById('tp').value);
+          const sl=parseFloat(document.getElementById('sl').value);
+          if(pnl>=tp){t.inPosition=false;addLog('sell',`TP HIT ${t.name} +${pnl.toFixed(1)}%`);}
+          else if(pnl<=-sl){t.inPosition=false;addLog('sell',`SL HIT ${t.name} ${pnl.toFixed(1)}%`);}
+        }
+      });
+      if(selectedToken){const lv=tokens.find(t=>t.id===selectedToken.id);if(lv){selectedToken=lv;updateAnalysePanel(lv);document.getElementById('sbPrice').textContent='$'+(lv.price<.001?lv.price.toFixed(8):lv.price.toFixed(5));}}
+      renderFeed();
+    }, 20000);
+  } else {
+    fab.textContent='▶'; fab.classList.remove('stop'); fab.classList.add('start');
+    addLog('info','Bot stopped.');
+    clearInterval(feedInterval);
+  }
+}
+
+// ── LOG ────────────────────────────────────────────────────────────
+function addLog(type,msg){
+  const list=document.getElementById('logList');
+  document.getElementById('logEmpty').style.display='none';
+  const t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const div=document.createElement('div');
+  div.className='log-item '+type;
+  div.innerHTML=`<span class="log-time">${t}</span><span class="log-msg ${type}">${msg}</span>`;
+  list.prepend(div);
+  while(list.children.length>60) list.removeChild(list.lastChild);
+}
+function clearLog(){ document.getElementById('logList').innerHTML=''; document.getElementById('logEmpty').style.display='block'; }
+
+function toggleSwitch(el){ el.classList.toggle('on'); }
+
+// ── INIT ───────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  if(window.solana?.isPhantom){
+    try{
+      const r=await window.solana.connect({onlyIfTrusted:true});
+      walletPubkey=r.publicKey.toString();
+      onConnected();
+    }catch{}
+  }
+});
+</script>
+
+</body>
+</html>
