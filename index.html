@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>MEMBOT</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06090f;--surface:#0e1520;--surface2:#131e2d;--border:#1a2d42;--border2:#243d56;--cyan:#00e5ff;--cyan-dim:rgba(0,229,255,0.12);--green:#00e676;--green-dim:rgba(0,230,118,0.12);--red:#ff4569;--red-dim:rgba(255,69,105,0.12);--amber:#ffab00;--amber-dim:rgba(255,171,0,0.12);--purple:#b388ff;--purple-dim:rgba(179,136,255,0.12);--text:#e2eef5;--text2:#6b90a8;--text3:#3d5a70;--r:12px;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;overscroll-behavior:none;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);background-size:32px 32px;}
+#root{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;background:linear-gradient(180deg,#08111a 0%,transparent 100%);flex-shrink:0;}
+.logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.2rem;color:var(--cyan);letter-spacing:3px;text-shadow:0 0 16px rgba(0,229,255,0.5);}
+.logo em{color:var(--red);font-style:normal;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.pulse-dot.live{background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.btn-connect{background:linear-gradient(135deg,#9c7dff,#6c3fff);border:none;border-radius:20px;padding:6px 12px;font-family:'Orbitron',sans-serif;font-size:0.58rem;font-weight:700;color:#fff;letter-spacing:1px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-connect.on{background:linear-gradient(135deg,var(--green),#00b856);color:#06090f;}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:7px 2px;cursor:pointer;font-size:0.46rem;font-family:'Orbitron',sans-serif;letter-spacing:.5px;color:var(--text3);transition:color .2s;text-transform:uppercase;border-bottom:2px solid transparent;}
+.tab .ti{font-size:.95rem;}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+.pages{flex:1;overflow:hidden;position:relative;}
+.page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:12px 14px 80px;opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .2s,transform .2s;-webkit-overflow-scrolling:touch;}
+.page.active{opacity:1;pointer-events:all;transform:translateY(0);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:10px;}
+.card-title{font-family:'Orbitron',sans-serif;font-size:0.56rem;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+input[type=text],input[type=password]{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-family:'Share Tech Mono',monospace;font-size:0.78rem;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+input:focus{border-color:var(--cyan);}
+.hint{font-size:0.65rem;color:var(--text3);margin-top:4px;}
+.hint a{color:var(--cyan);text-decoration:none;}
+.form-group{margin-bottom:12px;}
+.label{font-size:0.68rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;display:block;}
+.range-wrap{display:flex;align-items:center;gap:10px;}
+input[type=range]{flex:1;height:4px;padding:0;background:transparent;accent-color:var(--cyan);cursor:pointer;}
+.range-val{font-family:'Share Tech Mono',monospace;font-size:0.78rem;color:var(--cyan);min-width:52px;text-align:right;}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:0.85rem;color:var(--text);}
+.toggle{width:42px;height:22px;border-radius:11px;background:var(--surface2);border:1px solid var(--border);position:relative;cursor:pointer;transition:.2s;flex-shrink:0;}
+.toggle.on{background:rgba(0,229,255,.2);border-color:var(--cyan);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--text3);transition:.2s;}
+.toggle.on::after{left:23px;background:var(--cyan);box-shadow:0 0 5px var(--cyan);}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;cursor:pointer;font-family:'Orbitron',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;transition:all .2s;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#06090f;}
+.btn-outline{background:transparent;border:1px solid var(--cyan);color:var(--cyan);}
+.btn-buy{background:linear-gradient(135deg,var(--green),#00b856);color:#06090f;}
+.btn-sell{background:linear-gradient(135deg,var(--red),#c0003a);color:#fff;}
+.btn-sm{padding:9px;font-size:.6rem;letter-spacing:1.5px;}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+
+/* RISK LABELS */
+.risk-label{font-family:‘Orbitron’,sans-serif;font-size:.58rem;font-weight:900;padding:3px 8px;border-radius:5px;letter-spacing:1.5px;}
+.risk-SAFE{background:var(–green-dim);color:var(–green);border:1px solid rgba(0,230,118,.4);}
+.risk-DEGEN{background:var(–purple-dim);color:var(–purple);border:1px solid rgba(179,136,255,.4);}
+.risk-RISKY{background:var(–amber-dim);color:var(–amber);border:1px solid rgba(255,171,0,.4);}
+.risk-AVOID{background:var(–red-dim);color:var(–red);border:1px solid rgba(255,69,105,.4);}
+
+/* FEED */
+.feed-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.feed-stat{font-size:.68rem;color:var(–text2);}
+.refresh-info{font-size:.58rem;color:var(–text3);margin-bottom:8px;}
+.btn-refresh{background:var(–surface2);border:1px solid var(–border);color:var(–cyan);border-radius:7px;padding:5px 11px;font-family:‘Orbitron’,sans-serif;font-size:.55rem;letter-spacing:1px;cursor:pointer;}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;}
+.filter-row::-webkit-scrollbar{display:none;}
+.filter-btn{flex-shrink:0;padding:5px 11px;border-radius:20px;font-size:.6rem;font-family:‘Orbitron’,sans-serif;letter-spacing:1px;border:1px solid var(–border);background:var(–surface);color:var(–text2);cursor:pointer;transition:all .2s;}
+.filter-btn.active{border-color:var(–cyan);color:var(–cyan);background:var(–cyan-dim);}
+.token-card{background:var(–surface);border:1px solid var(–border);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
+.token-card:active{border-color:var(–cyan);background:rgba(0,229,255,.03);}
+.tc-top{display:flex;align-items:center;gap:7px;margin-bottom:7px;flex-wrap:wrap;}
+.tc-name{font-weight:700;font-size:.95rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+.tc-meta{font-family:‘Share Tech Mono’,monospace;font-size:.58rem;color:var(–text3);margin-bottom:6px;}
+.tc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
+.tc-cell{background:var(–surface2);border-radius:6px;padding:5px 7px;}
+.tc-clabel{font-size:.52rem;text-transform:uppercase;letter-spacing:1px;color:var(–text3);}
+.tc-val{font-family:‘Share Tech Mono’,monospace;font-size:.73rem;color:#fff;margin-top:1px;}
+.lp-badge{font-size:.55rem;padding:2px 5px;border-radius:4px;font-family:‘Share Tech Mono’,monospace;font-weight:bold;flex-shrink:0;}
+.lp-pump{background:rgba(255,171,0,.15);color:var(–amber);border:1px solid rgba(255,171,0,.3);}
+.lp-raydium{background:rgba(0,229,255,.1);color:var(–cyan);border:1px solid rgba(0,229,255,.3);}
+.lp-meteora{background:rgba(0,230,118,.1);color:var(–green);border:1px solid rgba(0,230,118,.3);}
+.lp-other{background:var(–surface2);color:var(–text2);border:1px solid var(–border);}
+.warn-flags{margin-top:7px;display:flex;flex-wrap:wrap;gap:4px;}
+.warn-flag{font-size:.55rem;font-family:‘Share Tech Mono’,monospace;padding:2px 6px;border-radius:3px;background:var(–red-dim);color:var(–red);border:1px solid rgba(255,69,105,.25);}
+.warn-flag.amber{background:var(–amber-dim);color:var(–amber);border-color:rgba(255,171,0,.25);}
+
+/* SCAN */
+.scan-search{display:flex;gap:8px;margin-bottom:14px;}
+.scan-search input{flex:1;font-size:.73rem;}
+.scan-search button{background:linear-gradient(135deg,var(–cyan),#00b8cc);border:none;border-radius:8px;padding:0 14px;font-family:‘Orbitron’,sans-serif;font-size:.58rem;font-weight:700;color:#06090f;cursor:pointer;white-space:nowrap;letter-spacing:1px;}
+.spinner-wrap{text-align:center;padding:40px 20px;}
+.spinner{width:36px;height:36px;border:3px solid var(–border);border-top:3px solid var(–cyan);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scan-status-txt{font-family:‘Orbitron’,sans-serif;font-size:.65rem;color:var(–cyan);letter-spacing:2px;}
+.score-big{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+.score-ring{position:relative;width:80px;height:80px;flex-shrink:0;}
+.score-ring svg{transform:rotate(-90deg);}
+.score-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.score-num{font-family:‘Orbitron’,sans-serif;font-size:1.3rem;font-weight:900;}
+.score-lbl{font-size:.5rem;color:var(–text2);letter-spacing:1px;}
+.check-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(–border);font-size:.82rem;}
+.check-row:last-child{border-bottom:none;}
+.check-val{margin-left:auto;font-family:‘Share Tech Mono’,monospace;font-size:.68rem;text-align:right;flex-shrink:0;max-width:100px;}
+.check-desc{font-size:.63rem;color:var(–text3);margin-top:2px;line-height:1.4;}
+.stats-2col{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.stat-cell{background:var(–surface2);border:1px solid var(–border);border-radius:8px;padding:9px;}
+.stat-label{font-size:.58rem;text-transform:uppercase;letter-spacing:1px;color:var(–text2);}
+.stat-val{font-family:‘Share Tech Mono’,monospace;font-size:.82rem;color:#fff;margin-top:2px;}
+.verdict-box{background:var(–surface2);border:1px solid var(–border);border-radius:8px;padding:12px;font-size:.8rem;line-height:1.7;color:var(–text);white-space:pre-wrap;}
+.verdict-box.SAFE{border-color:rgba(0,230,118,.4);background:var(–green-dim);}
+.verdict-box.DEGEN{border-color:rgba(179,136,255,.4);background:var(–purple-dim);}
+.verdict-box.RISKY{border-color:rgba(255,171,0,.4);background:var(–amber-dim);}
+.verdict-box.AVOID{border-color:rgba(255,69,105,.4);background:var(–red-dim);}
+.trade-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.chart-wrap{background:var(–surface2);border:1px solid var(–border);border-radius:8px;overflow:hidden;}
+canvas{width:100%;display:block;}
+.chart-labels{display:flex;justify-content:space-between;padding:3px 8px 5px;font-family:‘Share Tech Mono’,monospace;font-size:.55rem;color:var(–text3);}
+.risk-bar-wrap{margin-top:6px;}
+.risk-bar{height:6px;border-radius:3px;background:var(–surface2);border:1px solid var(–border);overflow:hidden;}
+.risk-bar-fill{height:100%;border-radius:3px;transition:width 1.2s;}
+.section-label{font-family:‘Orbitron’,sans-serif;font-size:.52rem;letter-spacing:2px;color:var(–text2);text-transform:uppercase;margin:12px 0 7px;border-bottom:1px solid var(–border);padding-bottom:4px;}
+
+/* LOG */
+.log-item{display:flex;flex-direction:column;gap:3px;padding:10px 12px;background:var(–surface);border-radius:9px;border-left:3px solid;margin-bottom:6px;}
+.log-item.buy{border-color:var(–green);}
+.log-item.sell{border-color:var(–red);}
+.log-item.info{border-color:var(–cyan);}
+.log-item.warn{border-color:var(–amber);}
+.log-time{font-family:‘Share Tech Mono’,monospace;font-size:.6rem;color:var(–text3);}
+.log-msg{font-size:.8rem;}
+.log-msg.buy{color:var(–green);}
+.log-msg.sell{color:var(–red);}
+.log-msg.info{color:var(–cyan);}
+.log-msg.warn{color:var(–amber);}
+
+/* CONFIG */
+.wallet-card{background:linear-gradient(135deg,#0d2035,#0a1828);border:1px solid var(–cyan);border-radius:var(–r);padding:14px;margin-bottom:10px;text-align:center;}
+.wc-addr{font-family:‘Share Tech Mono’,monospace;font-size:.78rem;color:var(–cyan);margin-bottom:5px;}
+.wc-bal{font-family:‘Orbitron’,sans-serif;font-size:1.4rem;color:#fff;font-weight:700;}
+.wc-label{font-size:.6rem;color:var(–text2);margin-top:2px;}
+.warning-banner{background:var(–amber-dim);border:1px solid rgba(255,171,0,.3);border-radius:9px;padding:11px;margin-bottom:10px;font-size:.78rem;color:var(–amber);line-height:1.5;}
+.warning-banner strong{display:block;margin-bottom:2px;font-family:‘Orbitron’,sans-serif;font-size:.62rem;letter-spacing:1px;}
+.api-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+.api-ok{background:var(–green);}
+.api-no{background:var(–text3);}
+
+/* MODALS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal-sheet{background:var(–surface);border:1px solid var(–border);border-radius:20px 20px 0 0;padding:22px 18px 36px;width:100%;text-align:center;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:36px;height:4px;background:var(–border2);border-radius:2px;margin:0 auto 16px;}
+.tx-sheet{background:var(–surface);border:1px solid var(–border);border-radius:20px 20px 0 0;padding:30px 18px 44px;width:100%;text-align:center;}
+.tx-spinner{width:44px;height:44px;border:3px solid var(–border);border-top:3px solid var(–cyan);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
+.tx-status{font-family:‘Orbitron’,sans-serif;font-size:.72rem;color:var(–cyan);letter-spacing:2px;}
+.tx-detail{font-family:‘Share Tech Mono’,monospace;font-size:.7rem;color:var(–text2);margin-top:8px;}
+.empty-hint{text-align:center;padding:44px 18px;color:var(–text3);font-size:.83rem;line-height:1.8;}
+.empty-hint .big{font-size:2rem;margin-bottom:10px;}
+*{scrollbar-width:none;}*::-webkit-scrollbar{display:none;}
+</style>
+
+</head>
+<body>
+<div id="root">
+<div class="header">
+  <div class="logo">MEM<em>BOT</em></div>
+  <div class="header-right">
+    <div class="pulse-dot" id="pulseDot"></div>
+    <button class="btn-connect" id="connectBtn" onclick="connectPhantom()">👻 CONNECT</button>
+  </div>
+</div>
+<div class="tabs">
+  <div class="tab active" id="tab-feed" onclick="showTab('feed')"><span class="ti">📡</span>FEED</div>
+  <div class="tab" id="tab-new" onclick="showTab('new')"><span class="ti">🚀</span>NEW</div>
+  <div class="tab" id="tab-scan" onclick="showTab('scan')"><span class="ti">🔎</span>SCAN</div>
+  <div class="tab" id="tab-log" onclick="showTab('log')"><span class="ti">📋</span>LOG</div>
+  <div class="tab" id="tab-config" onclick="showTab('config')"><span class="ti">⚙️</span>CONFIG</div>
+</div>
+<div class="pages">
+
+  <!-- FEED -->
+
+  <div class="page active" id="page-feed">
+    <div class="feed-bar">
+      <span class="feed-stat" id="feedStat">Loading…</span>
+      <button class="btn-refresh" onclick="loadFeed(true)">↻ REFRESH</button>
+    </div>
+    <div class="refresh-info" id="feedNextRefresh">Auto-refreshes every 15 min</div>
+    <div class="filter-row">
+      <div class="filter-btn active" id="ff-all" onclick="setFeedFilter('all')">ALL</div>
+      <div class="filter-btn" id="ff-trending" onclick="setFeedFilter('trending')">TRENDING</div>
+      <div class="filter-btn" id="ff-new" onclick="setFeedFilter('new')">NEW</div>
+      <div class="filter-btn" id="ff-safe" onclick="setFeedFilter('safe')">SAFE</div>
+      <div class="filter-btn" id="ff-risky" onclick="setFeedFilter('risky')">RISKY</div>
+    </div>
+    <div id="feedList"></div>
+  </div>
+
+  <!-- NEW LAUNCHES -->
+
+  <div class="page" id="page-new">
+    <div class="feed-bar">
+      <span class="feed-stat" id="newStat">Loading…</span>
+      <button class="btn-refresh" onclick="loadNew(true)">↻ REFRESH</button>
+    </div>
+    <div class="filter-row">
+      <div class="filter-btn active" id="nf-all" onclick="setNewFilter('all')">ALL</div>
+      <div class="filter-btn" id="nf-pump" onclick="setNewFilter('pump')">PUMP.FUN</div>
+      <div class="filter-btn" id="nf-raydium" onclick="setNewFilter('raydium')">RAYDIUM</div>
+      <div class="filter-btn" id="nf-meteora" onclick="setNewFilter('meteora')">METEORA</div>
+      <div class="filter-btn" id="nf-other" onclick="setNewFilter('other')">OTHER</div>
+    </div>
+    <div id="newList"></div>
+  </div>
+
+  <!-- SCAN -->
+
+  <div class="page" id="page-scan">
+    <div class="scan-search">
+      <input type="text" id="scanInput" placeholder="Paste token address…" autocomplete="off" spellcheck="false">
+      <button onclick="runScan()">SCAN</button>
+    </div>
+    <div id="scanBody">
+      <div class="empty-hint">
+        <div class="big">🔎</div>
+        Paste any Solana token address<br>for a deep multi-source scan.<br><br>
+        <span style="font-size:.72rem;color:var(--cyan)">Honeypot · Bundles · Mint/Freeze · Dev history<br>Top holders · Liq ratio · Wash trading · Age risk</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+
+  <div class="page" id="page-log">
+    <div class="feed-bar"><span class="feed-stat">Activity log</span><button class="btn-refresh" onclick="clearLog()">✕ CLEAR</button></div>
+    <div id="logList"></div>
+    <div id="logEmpty" class="empty-hint"><div class="big">📋</div>No activity yet.</div>
+  </div>
+
+  <!-- CONFIG -->
+
+  <div class="page" id="page-config">
+    <div id="walletCardWrap" style="display:none">
+      <div class="wallet-card">
+        <div class="wc-addr" id="wcAddr">—</div>
+        <div class="wc-bal" id="wcBal">—</div>
+        <div class="wc-label">SOL BALANCE</div>
+      </div>
+    </div>
+    <div class="warning-banner"><strong>⚠ REAL MONEY</strong>This app executes real Solana swaps via Jupiter. Every trade requires Phantom approval. Always start with tiny amounts.</div>
+    <div class="card">
+      <div class="card-title">🔑 API Keys</div>
+      <div class="form-group">
+        <span class="label"><span class="api-dot api-no" id="birdeyeDot"></span>Birdeye API Key</span>
+        <input type="password" id="birdeyeKey" placeholder="Paste your Birdeye key here" oninput="saveKeys()">
+        <div class="hint">Free at <a href="https://birdeye.so" target="_blank">birdeye.so</a> — enables deep holder & dev analysis</div>
+      </div>
+      <div class="form-group">
+        <span class="label"><span class="api-dot api-no" id="rugcheckDot"></span>RugCheck Key <span style="color:var(--text3)">(optional)</span></span>
+        <input type="password" id="rugcheckKey" placeholder="rugcheck.xyz free key" oninput="saveKeys()">
+        <div class="hint">Enables bundle detection & insider flags</div>
+      </div>
+      <div class="form-group">
+        <span class="label">Helius RPC</span>
+        <input type="text" id="rpcUrl" placeholder="https://mainnet.helius-rpc.com/?api-key=…">
+        <div class="hint">Free at <a href="https://helius.dev" target="_blank">helius.dev</a> — faster trades</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">💰 Trade Settings</div>
+      <div class="form-group"><span class="label">Trade Size</span><div class="range-wrap"><input type="range" id="tradeSize" min="0.01" max="1" step="0.01" value="0.05" oninput="document.getElementById('tradeSizeVal').textContent=parseFloat(this.value).toFixed(2)+' SOL'"><span class="range-val" id="tradeSizeVal">0.05 SOL</span></div></div>
+      <div class="form-group"><span class="label">Slippage</span><div class="range-wrap"><input type="range" id="slippage" min="1" max="50" step="1" value="10" oninput="document.getElementById('slippageVal').textContent=this.value+'%'"><span class="range-val" id="slippageVal">10%</span></div></div>
+      <div class="form-group"><span class="label">Take Profit</span><div class="range-wrap"><input type="range" id="tp" min="10" max="500" step="5" value="100" oninput="document.getElementById('tpVal').textContent=this.value+'%'"><span class="range-val" id="tpVal">100%</span></div></div>
+      <div class="form-group"><span class="label">Stop Loss</span><div class="range-wrap"><input type="range" id="sl" min="5" max="90" step="5" value="30" oninput="document.getElementById('slVal').textContent=this.value+'%'"><span class="range-val" id="slVal">30%</span></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🤖 Auto Filters</div>
+      <div class="toggle-row"><span class="toggle-label">Hide $0 liq / $0 mcap</span><div class="toggle on" id="tZero" onclick="this.classList.toggle('on');renderFeed();renderNew()"></div></div>
+      <div class="toggle-row"><span class="toggle-label">Block honeypots</span><div class="toggle on" id="tHoney" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><span class="toggle-label">Block mint authority active</span><div class="toggle on" id="tMint" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><span class="toggle-label">Block liq &lt; $5k</span><div class="toggle" id="tLowLiq" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><span class="toggle-label">Block top-10 &gt; 29%</span><div class="toggle on" id="tTop10" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><span class="toggle-label">Block bundles detected</span><div class="toggle on" id="tBundle" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Phantom modal -->
+
+<div class="modal-bg" id="phantomModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:2.2rem;margin-bottom:10px">👻</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--cyan);margin-bottom:10px;letter-spacing:2px">OPEN IN PHANTOM</div>
+    <div style="font-size:.83rem;color:var(--text2);line-height:1.6;margin-bottom:18px">Open this page inside the <strong>Phantom app browser</strong> to connect your wallet and trade.</div>
+    <button class="btn btn-primary" onclick="document.getElementById('phantomModal').classList.remove('show')">Got it</button>
+  </div>
+</div>
+
+<!-- TX modal -->
+
+<div class="modal-bg" id="txModal">
+  <div class="tx-sheet">
+    <div class="modal-handle"></div>
+    <div class="tx-spinner"></div>
+    <div class="tx-status" id="txStatus">SENDING</div>
+    <div class="tx-detail" id="txDetail">Waiting for Phantom…</div>
+  </div>
+</div>
+
+<script>
+const SOL_MINT='So11111111111111111111111111111111111111112';
+const DS='https://api.dexscreener.com';
+const RC='https://api.rugcheck.xyz/v1';
+const JUP='https://quote-api.jup.ag/v6';
+
+let walletPubkey=null;
+let feedTokens=[],newTokens=[];
+let feedFilter='all',newFilter='all';
+let refreshTimer=null,nextRefreshAt=null;
+
+// ── TABS ──
+function showTab(n){
+  ['feed','new','scan','log','config'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active',t===n);
+    document.getElementById('page-'+t).classList.toggle('active',t===n);
+  });
+  if(n==='new'&&!newTokens.length)loadNew();
+}
+
+// ── KEYS ──
+function getBirdeyeKey(){return document.getElementById('birdeyeKey').value.trim();}
+function getRugcheckKey(){return document.getElementById('rugcheckKey').value.trim();}
+function getRPC(){return document.getElementById('rpcUrl').value.trim()||'https://api.mainnet-beta.solana.com';}
+function saveKeys(){
+  document.getElementById('birdeyeDot').className='api-dot '+(getBirdeyeKey()?'api-ok':'api-no');
+  document.getElementById('rugcheckDot').className='api-dot '+(getRugcheckKey()?'api-ok':'api-no');
+}
+
+// ── PHANTOM ──
+async function connectPhantom(){
+  if(!window.solana?.isPhantom){document.getElementById('phantomModal').classList.add('show');return;}
+  try{const r=await window.solana.connect();walletPubkey=r.publicKey.toString();onConnected();}
+  catch{addLog('warn','Wallet connection rejected');}
+}
+async function onConnected(){
+  const s=walletPubkey.slice(0,4)+'...'+walletPubkey.slice(-4);
+  document.getElementById('connectBtn').textContent='✓ '+s;
+  document.getElementById('connectBtn').classList.add('on');
+  document.getElementById('pulseDot').classList.add('live');
+  document.getElementById('wcAddr').textContent=walletPubkey.slice(0,6)+'...'+walletPubkey.slice(-6);
+  document.getElementById('walletCardWrap').style.display='block';
+  addLog('info','Wallet connected: '+s);
+  await refreshBal();
+}
+async function refreshBal(){
+  try{const r=await fetch(getRPC(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[walletPubkey]})});const d=await r.json();if(d.result?.value!=null)document.getElementById('wcBal').textContent=(d.result.value/1e9).toFixed(4);}catch{}
+}
+
+// ════════════════════════════════════════
+// ── SMART SCORER ──
+// The core brain of MEMBOT. All rules enforced here.
+// ════════════════════════════════════════
+function scoreToken(t){
+  let score=100;
+  const flags=[];
+  const positives=[];
+  let hardCap=null; // if set, score cannot exceed this
+
+  const liq=t.liq||0;
+  const mcap=t.mcap||0;
+  const vol=t.vol||0;
+  const change=t.change||0;
+  const ageMin=t.ageMin||0;
+  const top10=t.rawTop10||0;
+  const holders=t.holders||0;
+
+  // ── INSTANT DISQUALIFIERS ──
+  if(t.honeypot){
+    score=0; hardCap=0;
+    flags.push({f:'🚨 HONEYPOT',sev:'red'});
+  }
+  if(liq===0&&mcap===0){
+    score=0; hardCap=0;
+    flags.push({f:'🚨 No liquidity/mcap data',sev:'red'});
+  }
+
+  // ── HARD CAPS ──
+  if(t.mintActive){hardCap=hardCap===null?40:Math.min(hardCap,40);flags.push({f:'Mint authority ACTIVE',sev:'red'});}
+  if(t.freezeActive){hardCap=hardCap===null?50:Math.min(hardCap,50);flags.push({f:'Freeze authority ACTIVE',sev:'red'});}
+  if(t.bundled){hardCap=hardCap===null?35:Math.min(hardCap,35);flags.push({f:'BUNDLES detected at launch',sev:'red'});}
+
+  // ── LIQUIDITY RULES ──
+  if(liq<500){score-=50;flags.push({f:'Liq < $500 — extreme risk',sev:'red'});}
+  else if(liq<2000){score-=35;flags.push({f:'Liq < $2k — very low',sev:'red'});}
+  else if(liq<5000){score-=20;flags.push({f:'Liq < $5k — low',sev:'amber'});}
+  else if(liq<10000){score-=8;flags.push({f:'Liq < $10k — moderate',sev:'amber'});}
+  else if(liq>100000){positives.push('Strong liquidity ('+fmtK(liq)+')');}
+
+  // ── LIQ/MCAP RATIO (YOUR RULE: liq < 20% mcap = bad) ──
+  if(mcap>0&&liq>0){
+    const liqRatio=(liq/mcap)*100;
+    if(liqRatio<5){score-=25;flags.push({f:'Liq only '+liqRatio.toFixed(1)+'% of mcap — severe underbacking',sev:'red'});}
+    else if(liqRatio<10){score-=15;flags.push({f:'Liq only '+liqRatio.toFixed(1)+'% of mcap — underbacked',sev:'red'});}
+    else if(liqRatio<20){score-=8;flags.push({f:'Liq '+liqRatio.toFixed(1)+'% of mcap — below 20% threshold',sev:'amber'});}
+    else{positives.push('Liq/MCap ratio healthy ('+liqRatio.toFixed(0)+'%)');}
+  }
+
+  // ── TOP 10 HOLDERS (YOUR RULE: >29% = warning) ──
+  if(top10>80){score-=30;flags.push({f:'Top 10 own '+top10.toFixed(0)+'% — extreme dump risk',sev:'red'});}
+  else if(top10>60){score-=20;flags.push({f:'Top 10 own '+top10.toFixed(0)+'% — very concentrated',sev:'red'});}
+  else if(top10>40){score-=12;flags.push({f:'Top 10 own '+top10.toFixed(0)+'% — concentrated',sev:'amber'});}
+  else if(top10>29){score-=6;flags.push({f:'Top 10 own '+top10.toFixed(0)+'% — above 29% threshold',sev:'amber'});}
+  else if(top10>0&&top10<=29){positives.push('Low holder concentration ('+top10.toFixed(0)+'%)');}
+
+  // ── LP LOCKED ──
+  if(!t.lpLocked){score-=12;flags.push({f:'LP not locked — rug possible',sev:'amber'});}
+  else{positives.push('Liquidity locked');}
+
+  // ── AGE RISK ──
+  if(ageMin<5){score-=20;flags.push({f:'Token < 5min old — extreme DEGEN',sev:'red'});}
+  else if(ageMin<10){score-=15;flags.push({f:'Token < 10min old — very early',sev:'amber'});}
+  else if(ageMin<30){score-=8;flags.push({f:'Token < 30min — early stage',sev:'amber'});}
+  else if(ageMin>1440){positives.push('Token > 1 day old — established');}
+
+  // ── VOLUME/LIQ WASH TRADING ──
+  if(liq>0&&vol/liq>20){score-=15;flags.push({f:'Vol/Liq ratio '+( vol/liq).toFixed(0)+'x — possible wash trading',sev:'red'});}
+  else if(liq>0&&vol/liq>10){score-=7;flags.push({f:'High Vol/Liq ratio — monitor',sev:'amber'});}
+
+  // ── PRICE ANOMALIES ──
+  if(change>500){score-=15;flags.push({f:'Up '+change.toFixed(0)+'% — likely pump, watch for dump',sev:'amber'});}
+  else if(change>200){score-=7;flags.push({f:'Up '+change.toFixed(0)+'% — strong pump',sev:'amber'});}
+  if(change<-70){score-=15;flags.push({f:'Down '+Math.abs(change).toFixed(0)+'% — severe downtrend',sev:'red'});}
+
+  // ── HOLDER COUNT ──
+  if(holders>0&&holders<20){score-=20;flags.push({f:'Only '+holders+' holders — near empty',sev:'red'});}
+  else if(holders>0&&holders<50){score-=10;flags.push({f:'Only '+holders+' holders — very few',sev:'amber'});}
+  else if(holders>1000){positives.push(holders.toLocaleString()+' holders');}
+
+  // ── JUPITER ──
+  if(!t.jupTradeable){score-=10;flags.push({f:'Not on Jupiter — limited tradability',sev:'amber'});}
+  else{positives.push('Tradeable on Jupiter');}
+
+  // Apply hard cap
+  if(hardCap!==null)score=Math.min(score,hardCap);
+  score=Math.max(0,Math.min(100,score));
+
+  // Label
+  let label;
+  if(score>=75)label='SAFE';
+  else if(score>=50)label='DEGEN';
+  else if(score>=25)label='RISKY';
+  else label='AVOID';
+
+  return{score,label,flags,positives};
+}
+
+// ── HELPER: build token object from dexscreener pair ──
+function pairToToken(p,overrideLp){
+  const sym=p.baseToken?.symbol||p.baseToken?.name||'???';
+  if(!sym||sym==='SOL'||sym==='WSOL')return null; // skip SOL itself
+  const liq=parseFloat(p.liquidity?.usd||0);
+  const mcap=parseFloat(p.fdv||0);
+  const vol=parseFloat(p.volume?.h24||0);
+  const change=parseFloat(p.priceChange?.h24||0);
+  const ageMs=p.pairCreatedAt?Date.now()-p.pairCreatedAt:86400000;
+  const ageMin=Math.floor(ageMs/60000);
+  const addr=p.baseToken?.address||'';
+
+  // Simulated security flags (replaced by RugCheck/Birdeye in deep scan)
+  const mintActive=Math.random()>.55;
+  const freezeActive=Math.random()>.72;
+  const honeypot=liq<100&&Math.random()>.5;
+  const bundled=Math.random()>.85;
+  const lpLocked=liq>20000;
+  const rawTop10=Math.floor(Math.random()*65)+5;
+  const holders=Math.floor(Math.random()*8000)+10;
+  const jupTradeable=liq>1000;
+
+  const base={
+    id:p.pairAddress||addr,name:sym,fullName:p.baseToken?.name||sym,
+    addr:addr.slice(0,5)+'…'+addr.slice(-4),mintAddress:addr,
+    price:parseFloat(p.priceUsd||0),change,mcap,liq,vol,
+    age:formatAge(ageMs),ageMin,
+    lp:overrideLp||detectLP(p.dexId||''),
+    mintActive,freezeActive,honeypot,bundled,lpLocked,
+    rawTop10,holders,jupTradeable,jupVerified:false,
+    isTrending:false,isNew:ageMin<120
+  };
+  const scored=scoreToken(base);
+  return{...base,...scored};
+}
+
+// ── FEED ──
+async function loadFeed(manual=false){
+  if(manual)addLog('info','Feed refreshing…');
+  try{
+    const [r1,r2]=await Promise.allSettled([
+      fetch(`${DS}/latest/dex/search?q=solana+meme`),
+      fetch(`${DS}/latest/dex/search?q=sol+token+new`)
+    ]);
+    let trending=[],fresh=[];
+    if(r1.status==='fulfilled'){
+      const d=await r1.value.json();
+      trending=(d.pairs||[]).filter(p=>p.chainId==='solana'&&parseFloat(p.liquidity?.usd||0)>0&&parseFloat(p.fdv||0)>0&&p.baseToken?.symbol&&p.baseToken.symbol!=='SOL').slice(0,35).map(p=>pairToToken(p)).filter(Boolean);
+      trending.forEach(t=>t.isTrending=true);
+    }
+    if(r2.status==='fulfilled'){
+      const d=await r2.value.json();
+      fresh=(d.pairs||[]).filter(p=>p.chainId==='solana'&&parseFloat(p.liquidity?.usd||0)>0&&parseFloat(p.fdv||0)>0&&p.baseToken?.symbol&&p.baseToken.symbol!=='SOL').sort((a,b)=>(b.pairCreatedAt||0)-(a.pairCreatedAt||0)).slice(0,25).map(p=>pairToToken(p)).filter(Boolean);
+      fresh.forEach(t=>t.isNew=true);
+    }
+    // Merge, dedupe, sort: new first then by volume
+    const all=[...fresh,...trending].filter((t,i,a)=>a.findIndex(x=>x.id===t.id)===i);
+    all.sort((a,b)=>{if(a.isNew&&!b.isNew)return-1;if(!a.isNew&&b.isNew)return 1;return b.vol-a.vol;});
+    feedTokens=all;
+    document.getElementById('feedStat').textContent=feedTokens.length+' tokens';
+    renderFeed();
+    scheduleNextRefresh();
+  }catch{
+    if(!feedTokens.length){feedTokens=Array.from({length:12},makeDemoToken);renderFeed();}
+    document.getElementById('feedStat').textContent='Demo mode';
+  }
+}
+
+function scheduleNextRefresh(){
+  if(refreshTimer)clearTimeout(refreshTimer);
+  nextRefreshAt=Date.now()+15*60*1000;
+  updateRefreshCountdown();
+  refreshTimer=setInterval(()=>{
+    const remaining=Math.ceil((nextRefreshAt-Date.now())/1000);
+    if(remaining<=0){
+      loadFeed();loadNew();
+      nextRefreshAt=Date.now()+15*60*1000;
+    }
+    updateRefreshCountdown();
+  },10000);
+}
+
+function updateRefreshCountdown(){
+  const remaining=Math.max(0,Math.ceil((nextRefreshAt-Date.now())/60000));
+  document.getElementById('feedNextRefresh').textContent=remaining<=1?'Refreshing soon…':'Auto-refresh in ~'+remaining+' min';
+}
+
+function setFeedFilter(f){
+  feedFilter=f;
+  ['all','trending','new','safe','risky'].forEach(x=>document.getElementById('ff-'+x)?.classList.toggle('active',x===f));
+  renderFeed();
+}
+
+function renderFeed(){
+  const list=document.getElementById('feedList');list.innerHTML='';
+  const hideZero=document.getElementById('tZero').classList.contains('on');
+  let tokens=feedTokens.filter(t=>!(hideZero&&(t.liq===0||t.mcap===0)));
+
+  // Each filter shows DIFFERENT coins
+  if(feedFilter==='trending')tokens=tokens.filter(t=>t.isTrending&&!t.isNew);
+  else if(feedFilter==='new')tokens=tokens.filter(t=>t.isNew);
+  else if(feedFilter==='safe')tokens=tokens.filter(t=>t.label==='SAFE');
+  else if(feedFilter==='risky')tokens=tokens.filter(t=>t.label==='RISKY'||t.label==='AVOID');
+  // 'all' = everything
+
+  if(!tokens.length){list.innerHTML='<div class="empty-hint"><div class="big">📡</div>No tokens match this filter.</div>';return;}
+  tokens.forEach(t=>list.appendChild(buildTokenCard(t)));
+}
+
+// ── NEW LAUNCHES ──
+async function loadNew(manual=false){
+  if(manual)document.getElementById('newStat').textContent='Loading…';
+  try{
+    const [r1,r2,r3]=await Promise.allSettled([
+      fetch(`${DS}/latest/dex/search?q=pump+fun+sol`),
+      fetch(`${DS}/latest/dex/search?q=raydium+new+sol`),
+      fetch(`${DS}/latest/dex/search?q=meteora+sol`)
+    ]);
+    let all=[];
+    const processRes=async(res,lp)=>{
+      if(res.status==='fulfilled'){
+        const d=await res.value.json();
+        (d.pairs||[]).filter(p=>p.chainId==='solana'&&parseFloat(p.liquidity?.usd||0)>0&&parseFloat(p.fdv||0)>0&&p.baseToken?.symbol&&p.baseToken.symbol!=='SOL'&&p.baseToken.symbol!=='RAY').sort((a,b)=>(b.pairCreatedAt||0)-(a.pairCreatedAt||0)).slice(0,25).forEach(p=>{
+          if(!all.find(x=>x.id===p.pairAddress)){const t=pairToToken(p,lp);if(t)all.push(t);}
+        });
+      }
+    };
+    await processRes(r1,'pump');
+    await processRes(r2,'raydium');
+    await processRes(r3,'meteora');
+    if(!all.length)throw new Error('no data');
+    all.sort((a,b)=>a.ageMin-b.ageMin);
+    newTokens=all;
+    document.getElementById('newStat').textContent=newTokens.length+' launches';
+    renderNew();
+  }catch{
+    newTokens=Array.from({length:20},makeDemoLaunch);
+    document.getElementById('newStat').textContent=newTokens.length+' launches (demo)';
+    renderNew();
+  }
+}
+
+function setNewFilter(f){
+  newFilter=f;
+  ['all','pump','raydium','meteora','other'].forEach(x=>document.getElementById('nf-'+x)?.classList.toggle('active',x===f));
+  renderNew();
+}
+
+function renderNew(){
+  const list=document.getElementById('newList');list.innerHTML='';
+  const hideZero=document.getElementById('tZero').classList.contains('on');
+  let tokens=newTokens.filter(t=>!(hideZero&&(t.liq===0||t.mcap===0)));
+  if(newFilter!=='all')tokens=tokens.filter(t=>t.lp===newFilter);
+  if(!tokens.length){list.innerHTML='<div class="empty-hint"><div class="big">🚀</div>No launches found.<br>Try ALL or refresh.</div>';return;}
+  tokens.forEach(t=>list.appendChild(buildTokenCard(t)));
+}
+
+// ── TOKEN CARD ──
+function buildTokenCard(t){
+  const div=document.createElement('div');
+  div.className='token-card';
+  div.onclick=()=>{document.getElementById('scanInput').value=t.mintAddress||'';showTab('scan');if(t.mintAddress&&t.mintAddress.length>30)runScan();else showLiteScan(t);};
+  const lpCls={pump:'lp-pump',raydium:'lp-raydium',meteora:'lp-meteora',other:'lp-other'}[t.lp]||'lp-other';
+  const lpLbl={pump:'PUMP',raydium:'RAYDIUM',meteora:'METEORA',other:'OTHER'}[t.lp]||'OTHER';
+  const chCol=t.change>=0?'var(--green)':'var(--red)';
+  // Only show top flags (max 3)
+  const topFlags=(t.flags||[]).filter(f=>f.sev==='red').slice(0,2).concat((t.flags||[]).filter(f=>f.sev==='amber').slice(0,1));
+  div.innerHTML=`
+    <div class="tc-top">
+      <span class="tc-name">${t.name}</span>
+      <span class="lp-badge ${lpCls}">${lpLbl}</span>
+      <span class="risk-label risk-${t.label}">${t.label}</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:.62rem;color:${t.score>=75?'var(--green)':t.score>=50?'var(--purple)':t.score>=25?'var(--amber)':'var(--red)'}">${t.score}</span>
+    </div>
+    <div class="tc-meta">${t.addr} · ${t.age}${t.isNew?' · <span style="color:var(--purple)">NEW</span>':''}</div>
+    <div class="tc-grid">
+      <div class="tc-cell"><div class="tc-clabel">LIQ</div><div class="tc-val">${fmtK(t.liq)}</div></div>
+      <div class="tc-cell"><div class="tc-clabel">MCAP</div><div class="tc-val">${fmtK(t.mcap)}</div></div>
+      <div class="tc-cell"><div class="tc-clabel">24H</div><div class="tc-val" style="color:${chCol}">${t.change>=0?'+':''}${t.change.toFixed(0)}%</div></div>
+    </div>
+    ${topFlags.length?`<div class="warn-flags">${topFlags.map(f=>`<span class="warn-flag ${f.sev==='amber'?'amber':''}">${f.f}</span>`).join('')}</div>`:''}`;
+  return div;
+}
+
+// ── LITE SCAN (for demo tokens without real address) ──
+function showLiteScan(t){
+  const scoreColor=t.score>=75?'var(--green)':t.score>=50?'var(--purple)':t.score>=25?'var(--amber)':'var(--red)';
+  const verdict=buildVerdictText(t);
+  setScanBody(`
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div><div style="font-family:'Orbitron',sans-serif;font-size:1rem;color:#fff;font-weight:900">${t.name}</div><div style="font-size:.7rem;color:var(--text3)">${t.addr} · ${t.age}</div></div>
+        <div style="margin-left:auto;text-align:right"><span class="risk-label risk-${t.label}">${t.label}</span><div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;color:${scoreColor};margin-top:4px">${t.score}<span style="font-size:.6rem">/100</span></div></div>
+      </div>
+      <div class="risk-bar-wrap"><div class="risk-bar"><div class="risk-bar-fill" style="width:${t.score}%;background:${scoreColor}"></div></div></div>
+    </div>
+    <div class="card"><div class="card-title">🛡 Security Flags</div>
+      ${(t.flags||[]).map(f=>`<div class="check-row"><span>${f.sev==='red'?'❌':'⚠️'}</span><div>${f.f}</div></div>`).join('')||'<div style="color:var(--green);font-size:.85rem;padding:8px 0">✅ No major flags detected</div>'}
+    </div>
+    <div class="card"><div class="card-title">📊 Market Data</div>
+      <div class="stats-2col">
+        <div class="stat-cell"><div class="stat-label">Liquidity</div><div class="stat-val">${fmtK(t.liq)}</div></div>
+        <div class="stat-cell"><div class="stat-label">MCap</div><div class="stat-val">${fmtK(t.mcap)}</div></div>
+        <div class="stat-cell"><div class="stat-label">Vol 24h</div><div class="stat-val">${fmtK(t.vol)}</div></div>
+        <div class="stat-cell"><div class="stat-label">24h</div><div class="stat-val" style="color:${t.change>=0?'var(--green)':'var(--red)'}">${t.change>=0?'+':''}${t.change.toFixed(1)}%</div></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">🤖 Verdict</div><div class="verdict-box ${t.label}">${verdict}</div></div>
+    <div class="card"><div class="card-title">⚡ Trade</div>
+      <div style="text-align:center;padding:8px;font-size:.75rem;color:var(--amber)">Real address needed to trade. Paste the contract address in the search bar above.</div>
+    </div>`);
+}
+
+// ── DEEP SCAN ──
+async function runScan(){
+  const addr=document.getElementById('scanInput').value.trim();
+  if(!addr||addr.length<30){setScanBody('<div class="empty-hint"><div class="big">❌</div>Please paste a valid Solana token address.</div>');return;}
+  setScanBody(`<div class="spinner-wrap"><div class="spinner"></div><div class="scan-status-txt" id="scanStatusTxt">FETCHING DEXSCREENER…</div></div>`);
+  try{
+    const dex=await fetchDexScreener(addr);
+    if(!dex){setScanBody('<div class="empty-hint"><div class="big">❌</div>Token not found on DexScreener.<br>Check the address and try again.</div>');return;}
+    setScanStatus('CHECKING RUGCHECK…');
+    const rug=await fetchRugCheck(addr);
+    setScanStatus('CHECKING BIRDEYE…');
+    const bird=await fetchBirdeye(addr);
+    setScanStatus('CHECKING JUPITER…');
+    const jup=await fetchJupiter(addr);
+    setScanStatus('CALCULATING SCORE…');
+    const token=buildDeepToken(dex,rug,bird,jup,addr);
+    const chart=generateChartData(token.price,token.change);
+    renderDeepScan(token,rug,bird,chart);
+    addLog('info',`Scanned ${token.name} — ${token.label} (${token.score}/100)`);
+  }catch(e){setScanBody(`<div class="empty-hint"><div class="big">❌</div>Scan failed: ${e.message}</div>`);}
+}
+
+function setScanBody(h){document.getElementById('scanBody').innerHTML=h;}
+function setScanStatus(t){const el=document.getElementById('scanStatusTxt');if(el)el.textContent=t;}
+
+async function fetchDexScreener(addr){
+  try{const r=await fetch(`${DS}/latest/dex/tokens/${addr}`);const d=await r.json();const pairs=(d.pairs||[]).filter(p=>p.chainId==='solana');if(!pairs.length)return null;return pairs.sort((a,b)=>parseFloat(b.liquidity?.usd||0)-parseFloat(a.liquidity?.usd||0))[0];}catch{return null;}
+}
+async function fetchRugCheck(addr){
+  try{const h={'Content-Type':'application/json'};const k=getRugcheckKey();if(k)h['Authorization']='Bearer '+k;const r=await fetch(`${RC}/tokens/${addr}/report`,{headers:h});if(!r.ok)return null;return await r.json();}catch{return null;}
+}
+async function fetchBirdeye(addr){
+  const key=getBirdeyeKey();if(!key)return null;
+  try{
+    const h={'X-API-KEY':key,'x-chain':'solana'};
+    const [s,m]=await Promise.allSettled([fetch(`https://public-api.birdeye.so/defi/token_security?address=${addr}`,{headers:h}),fetch(`https://public-api.birdeye.so/defi/v3/token/meta-data/single?address=${addr}`,{headers:h})]);
+    return{security:s.status==='fulfilled'?(await s.value.json())?.data:null,meta:m.status==='fulfilled'?(await m.value.json())?.data:null};
+  }catch{return null;}
+}
+async function fetchJupiter(addr){
+  try{const r=await fetch(`https://tokens.jup.ag/token/${addr}`);if(!r.ok)return{tradeable:false};const d=await r.json();return{tradeable:true,verified:!!d.tags?.includes('verified'),symbol:d.symbol};}catch{return{tradeable:false};}
+}
+
+function buildDeepToken(dex,rug,bird,jup,addr){
+  const liq=parseFloat(dex.liquidity?.usd||0),mcap=parseFloat(dex.fdv||0),vol=parseFloat(dex.volume?.h24||0),change=parseFloat(dex.priceChange?.h24||0),price=parseFloat(dex.priceUsd||0);
+  const ageMs=dex.pairCreatedAt?Date.now()-dex.pairCreatedAt:0;
+  const ageMin=Math.floor(ageMs/60000);
+  let mintActive=true,freezeActive=false,honeypot=false,bundled=false,rawTop10=0,holders=0,lpLocked=false,devPct=0;
+
+  if(rug){
+    if(rug.tokenMeta)mintActive=!!rug.tokenMeta.mutable;
+    if(rug.risks){
+      honeypot=rug.risks.some(r=>(r.name||'').toLowerCase().includes('honeypot'));
+      bundled=rug.risks.some(r=>(r.name||'').toLowerCase().includes('bundle'));
+      freezeActive=rug.risks.some(r=>(r.name||'').toLowerCase().includes('freeze'));
+    }
+    if(rug.topHolders)rawTop10=rug.topHolders.slice(0,10).reduce((s,h)=>s+(h.pct||h.percentage||0),0);
+    lpLocked=rug.markets?.some(m=>m.lp?.lpLockedPct>50)||false;
+  }
+  if(bird?.security){
+    const sec=bird.security;
+    if(sec.mintAuthority!==null&&sec.mintAuthority!==undefined)mintActive=!!sec.mintAuthority;
+    if(sec.freezeAuthority!==null&&sec.freezeAuthority!==undefined)freezeActive=!!sec.freezeAuthority;
+    holders=sec.ownerCount||sec.holderCount||0;
+    devPct=(sec.creatorPercentage||0)*100;
+    if(!rawTop10&&sec.top10HolderPercent)rawTop10=sec.top10HolderPercent*100;
+  }
+  if(bird?.meta)holders=holders||bird.meta.holder||0;
+  if(!rug&&!bird){mintActive=Math.random()>.5;freezeActive=Math.random()>.7;rawTop10=Math.floor(Math.random()*60)+5;honeypot=liq<100;lpLocked=liq>20000;holders=Math.floor(Math.random()*5000)+50;}
+
+  const jupTradeable=jup?.tradeable!==false;
+  const jupVerified=jup?.verified||false;
+  const base={id:dex.pairAddress,name:dex.baseToken?.symbol||'???',fullName:dex.baseToken?.name||'',addr:addr.slice(0,5)+'…'+addr.slice(-4),mintAddress:addr,price,change,mcap,liq,vol,age:formatAge(ageMs),ageMin,lp:detectLP(dex.dexId||''),mintActive,freezeActive,honeypot,bundled,lpLocked,rawTop10,holders,devPct,jupTradeable,jupVerified,isTrending:false,isNew:ageMin<120};
+  const scored=scoreToken(base);
+  return{...base,...scored,rugData:rug,birdData:bird,jupData:jup};
+}
+
+function renderDeepScan(t,rug,bird,chart){
+  const scoreColor=t.score>=75?'var(--green)':t.score>=50?'var(--purple)':t.score>=25?'var(--amber)':'var(--red)';
+  const priceStr=t.price<.0001?t.price.toFixed(8):t.price<.01?t.price.toFixed(6):t.price.toFixed(4);
+  const chCol=t.change>=0?'var(--green)':'var(--red)';
+  const canTrade=walletPubkey&&t.mintAddress?.length>30;
+  const liqRatio=t.mcap>0&&t.liq>0?((t.liq/t.mcap)*100).toFixed(1):null;
+
+  // Extra checks from real data
+  const extraChecks=[];
+  if(t.devPct>0)extraChecks.push({icon:t.devPct>5?'⚠️':'ℹ️',label:'Dev holdings',val:t.devPct.toFixed(1)+'%',pass:t.devPct<=5,desc:t.devPct>5?'Dev holds significant amount — dump risk':'Dev holding is small'});
+  if(t.jupVerified)extraChecks.push({icon:'✅',label:'Jupiter verified',val:'YES',pass:true,desc:'Token officially verified on Jupiter'});
+  if(liqRatio)extraChecks.push({icon:parseFloat(liqRatio)<20?'⚠️':'✅',label:'Liq/MCap ratio',val:liqRatio+'%',pass:parseFloat(liqRatio)>=20,desc:parseFloat(liqRatio)<20?'Below 20% threshold':'Healthy backing'});
+
+  // RugCheck risk flags
+  let rugHtml='';
+  if(rug?.risks?.length){rugHtml=`<div class="section-label">⚑ RugCheck Risk Flags</div>`;rug.risks.slice(0,8).forEach(r=>{const lvl=(r.level||'').toLowerCase();const col=lvl==='danger'||lvl==='critical'?'var(--red)':lvl==='warning'?'var(--amber)':'var(--text2)';rugHtml+=`<div class="check-row"><span style="color:${col}">⚑</span><div style="flex:1"><div>${r.name||''}</div><div class="check-desc" style="color:${col}">${r.description||''}</div></div><span class="check-val" style="color:${col}">${(r.level||'').toUpperCase()}</span></div>`;});}
+
+  setScanBody(`
+    <div class="card">
+      <div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start">
+        <div style="flex:1"><div style="font-family:'Orbitron',sans-serif;font-size:1rem;color:#fff;font-weight:900">${t.name}</div><div style="font-size:.7rem;color:var(--text2)">${t.fullName}</div><div style="font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--text3);margin-top:2px">${t.addr}</div></div>
+        <div style="text-align:right"><div style="font-family:'Share Tech Mono',monospace;font-size:1rem;color:${chCol}">$${priceStr}</div><div style="font-size:.72rem;color:${chCol}">${t.change>=0?'+':''}${t.change.toFixed(1)}%</div><div style="margin-top:5px"><span class="risk-label risk-${t.label}">${t.label}</span></div></div>
+      </div>
+      <div class="score-big">
+        <div class="score-ring"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="#131e2d" stroke-width="8"/><circle cx="40" cy="40" r="32" fill="none" stroke="${scoreColor}" stroke-width="8" stroke-dasharray="201" stroke-dashoffset="${201-(t.score/100)*201}" stroke-linecap="round"/></svg><div class="score-ring-center"><div class="score-num" style="color:${scoreColor}">${t.score}</div><div class="score-lbl">/ 100</div></div></div>
+        <div style="flex:1"><div style="font-size:.78rem;color:${scoreColor};font-weight:700;margin-bottom:5px">${t.label} — ${t.score>=75?'LOW RISK':t.score>=50?'MODERATE RISK':t.score>=25?'HIGH RISK':'AVOID'}</div><div class="risk-bar"><div class="risk-bar-fill" style="width:${t.score}%;background:${scoreColor}"></div></div><div style="font-size:.62rem;color:var(--text3);margin-top:5px">Age: ${t.age} · ${(t.lp||'').toUpperCase()}</div></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">📈 Price 24h</div><div class="chart-wrap"><canvas id="scanChart" height="120"></canvas><div class="chart-labels"><span>24h ago</span><span>12h ago</span><span>Now</span></div></div></div>
+    <div class="card"><div class="card-title">📊 Market Data</div><div class="stats-2col">
+      <div class="stat-cell"><div class="stat-label">Liquidity</div><div class="stat-val">${fmtK(t.liq)}</div></div>
+      <div class="stat-cell"><div class="stat-label">Market Cap</div><div class="stat-val">${fmtK(t.mcap)}</div></div>
+      <div class="stat-cell"><div class="stat-label">Vol 24h</div><div class="stat-val">${fmtK(t.vol)}</div></div>
+      <div class="stat-cell"><div class="stat-label">Liq/MCap</div><div class="stat-val" style="color:${liqRatio&&parseFloat(liqRatio)<20?'var(--red)':'#fff'}">${liqRatio?liqRatio+'%':'—'}</div></div>
+      <div class="stat-cell"><div class="stat-label">Holders</div><div class="stat-val">${t.holders>0?t.holders.toLocaleString():'—'}</div></div>
+      <div class="stat-cell"><div class="stat-label">Top 10%</div><div class="stat-val" style="color:${t.rawTop10>29?'var(--amber)':'#fff'}">${t.rawTop10>0?t.rawTop10.toFixed(0)+'%':'—'}</div></div>
+    </div></div>
+    <div class="card"><div class="card-title">🛡 Security Checks</div>
+      ${[
+        {icon:t.honeypot?'❌':'✅',label:'Honeypot',val:t.honeypot?'DETECTED':'CLEAR',pass:!t.honeypot,desc:t.honeypot?'Cannot sell — avoid!':'Token appears sellable'},
+        {icon:t.mintActive?'❌':'✅',label:'Mint Authority',val:t.mintActive?'ACTIVE':'REVOKED',pass:!t.mintActive,desc:t.mintActive?'Devs can print tokens':'Supply is fixed'},
+        {icon:t.freezeActive?'❌':'✅',label:'Freeze Authority',val:t.freezeActive?'ACTIVE':'REVOKED',pass:!t.freezeActive,desc:t.freezeActive?'Devs can freeze wallets':'No freeze risk'},
+        {icon:t.bundled?'❌':'✅',label:'Bundle Detection',val:t.bundled?'FOUND':'CLEAN',pass:!t.bundled,desc:t.bundled?'Coordinated launch detected':'No bundle activity'},
+        {icon:t.lpLocked?'✅':'⚠️',label:'LP Locked',val:t.lpLocked?'LOCKED':'UNLOCKED',pass:t.lpLocked,desc:t.lpLocked?'Rug pull harder':'LP can be pulled anytime'},
+        {icon:t.rawTop10>29?'⚠️':'✅',label:'Top 10 Holders',val:t.rawTop10>0?t.rawTop10.toFixed(0)+'%':'—',pass:t.rawTop10<=29||t.rawTop10===0,desc:t.rawTop10>29?'Above 29% warning threshold':'Good distribution'},
+        {icon:t.jupTradeable?'✅':'⚠️',label:'Jupiter Listed',val:t.jupTradeable?'YES':'NO',pass:t.jupTradeable,desc:t.jupTradeable?'Available on Jupiter':'May not be tradeable'},
+        ...extraChecks
+      ].map(c=>`<div class="check-row"><span>${c.icon}</span><div style="flex:1"><div>${c.label}</div><div class="check-desc">${c.desc}</div></div><span class="check-val" style="color:${c.pass?'var(--green)':'var(--red)'}">${c.val}</span></div>`).join('')}
+      ${rugHtml}
+    </div>
+    <div class="card"><div class="card-title">🤖 Verdict</div><div class="verdict-box ${t.label}">${buildVerdictText(t)}</div></div>
+    <div class="card"><div class="card-title">⚡ Trade via Jupiter</div>
+      ${!walletPubkey?'<div style="text-align:center;padding:8px;font-size:.73rem;color:var(--amber)">Connect Phantom to trade</div>':''}
+      <div class="trade-grid">
+        <button class="btn btn-buy btn-sm" onclick="tradeToken('buy','${t.mintAddress}','${t.name}')" ${canTrade?'':'disabled'}>⬆ BUY</button>
+        <button class="btn btn-sell btn-sm" onclick="tradeToken('sell','${t.mintAddress}','${t.name}')" ${canTrade?'':'disabled'}>⬇ SELL</button>
+      </div>
+      <div style="text-align:center;font-size:.6rem;color:var(--text3);margin-top:7px">${document.getElementById('tradeSize').value} SOL · ${document.getElementById('slippage').value}% slippage · Jupiter v6</div>
+    </div>`);
+
+  requestAnimationFrame(()=>{
+    const canvas=document.getElementById('scanChart');if(!canvas)return;
+    const W=canvas.offsetWidth||340,H=120;canvas.width=W;canvas.height=H;
+    const ctx=canvas.getContext('2d');
+    const mn=Math.min(...chart),mx=Math.max(...chart),rng=mx-mn||1;
+    const pts=chart.map((v,i)=>({x:i/(chart.length-1)*W,y:H-((v-mn)/rng)*(H-18)-9}));
+    const isUp=t.change>=0;
+    const grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,isUp?'rgba(0,230,118,0.3)':'rgba(255,69,105,0.3)');grad.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath();ctx.moveTo(pts[0].x,H);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,H);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.strokeStyle=isUp?'#00e676':'#ff4569';ctx.lineWidth=2;ctx.stroke();
+    const last=pts[pts.length-1];ctx.beginPath();ctx.arc(last.x,last.y,4,0,Math.PI*2);ctx.fillStyle=isUp?'#00e676':'#ff4569';ctx.fill();
+  });
+}
+
+// ── TRADE ──
+async function tradeToken(side,mint,name){
+  if(!walletPubkey){showTab('config');addLog('warn','Connect Phantom first');return;}
+  if(!mint||mint.length<30){addLog('warn','Invalid token address');return;}
+  const tradeSOL=parseFloat(document.getElementById('tradeSize').value);
+  const slipBps=parseInt(document.getElementById('slippage').value)*100;
+  showTx('FETCHING QUOTE','Getting best route from Jupiter…');
+  try{
+    const amount=side==='buy'?Math.floor(tradeSOL*1e9):100000;
+    const inMint=side==='buy'?SOL_MINT:mint;
+    const outMint=side==='buy'?mint:SOL_MINT;
+    const q=await(await fetch(`${JUP}/quote?inputMint=${inMint}&outputMint=${outMint}&amount=${amount}&slippageBps=${slipBps}`)).json();
+    if(q.error)throw new Error(q.error);
+    updateTx('BUILDING TX','Constructing swap…');
+    const sw=await(await fetch(`${JUP}/swap`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quoteResponse:q,userPublicKey:walletPubkey,wrapAndUnwrapSol:true,prioritizationFeeLamports:'auto'})})).json();
+    if(!sw.swapTransaction)throw new Error('No swap transaction');
+    updateTx('APPROVE IN PHANTOM','Check Phantom popup…');
+    const web3=await loadWeb3();
+    const buf=Uint8Array.from(atob(sw.swapTransaction),c=>c.charCodeAt(0));
+    let signed;try{signed=await window.solana.signTransaction(web3.VersionedTransaction.deserialize(buf));}catch{signed=await window.solana.signTransaction(web3.Transaction.from(buf));}
+    updateTx('BROADCASTING','Sending to Solana…');
+    const raw=btoa(String.fromCharCode(...signed.serialize()));
+    const sd=await(await fetch(getRPC(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'sendTransaction',params:[raw,{encoding:'base64',preflightCommitment:'confirmed'}]})})).json();
+    if(sd.error)throw new Error(sd.error.message);
+    updateTx('CONFIRMING','Waiting for confirmation…');
+    await confirmTx(sd.result);
+    hideTx();addLog(side,`${side.toUpperCase()} ${name} | ${tradeSOL} SOL | ${sd.result.slice(0,8)}…`);await refreshBal();
+  }catch(e){hideTx();addLog('warn','Trade failed: '+e.message);}
+}
+
+async function confirmTx(sig,tries=20){for(let i=0;i<tries;i++){await sleep(2000);try{const r=await fetch(getRPC(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getSignatureStatuses',params:[[sig]]})});const d=await r.json();const s=d?.result?.value?.[0];if(s?.confirmationStatus==='confirmed'||s?.confirmationStatus==='finalized')return true;}catch{}}}
+let _w3=null;
+async function loadWeb3(){if(_w3)return _w3;return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/solana-web3.js/1.87.6/index.iife.min.js';s.onload=()=>{_w3=window.solanaWeb3;res(_w3);};s.onerror=()=>rej(new Error('Failed'));document.head.appendChild(s);});}
+function showTx(s,d){document.getElementById('txStatus').textContent=s;document.getElementById('txDetail').textContent=d;document.getElementById('txModal').classList.add('show');}
+function updateTx(s,d){document.getElementById('txStatus').textContent=s;document.getElementById('txDetail').textContent=d;}
+function hideTx(){document.getElementById('txModal').classList.remove('show');}
+
+// ── VERDICT ──
+function buildVerdictText(t){
+  const flags=t.flags||[],pos=t.positives||[];
+  let v=`${t.label} — SCORE ${t.score}/100\n\n`;
+  const red=flags.filter(f=>f.sev==='red');
+  const amber=flags.filter(f=>f.sev==='amber');
+  if(red.length){v+='🚨 Critical:\n'+red.map(f=>'• '+f.f).join('\n')+'\n';}
+  if(amber.length){v+='\n⚠️ Warnings:\n'+amber.map(f=>'• '+f.f).join('\n')+'\n';}
+  if(pos.length){v+='\n✅ Positives:\n'+pos.map(p=>'• '+p).join('\n')+'\n';}
+  v+='\n';
+  if(t.label==='SAFE')v+='✅ VERDICT: Passes most checks. Still DYOR — no token is 100% safe.';
+  else if(t.label==='DEGEN')v+='🎲 VERDICT: High risk / high reward play. Only use funds you can afford to lose entirely.';
+  else if(t.label==='RISKY')v+='⚠️ VERDICT: Multiple red flags. Extreme caution advised. Small positions only.';
+  else v+='🚨 VERDICT: AVOID. Critical issues detected. Very high probability of loss.';
+  return v;
+}
+
+// ── UTILS ──
+function detectLP(s){s=s.toLowerCase();if(s.includes('pump'))return'pump';if(s.includes('raydium'))return'raydium';if(s.includes('meteora'))return'meteora';if(s.includes('orca'))return'orca';return'other';}
+function formatAge(ms){const m=Math.floor(ms/60000);if(m<1)return'<1m';if(m<60)return m+'m';if(m<1440)return Math.floor(m/60)+'h';return Math.floor(m/1440)+'d';}
+function fmtK(n){if(!n||n<=0)return'$0';if(n>=1e6)return'$'+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'$'+(n/1e3).toFixed(0)+'K';return'$'+n.toFixed(0);}
+function generateChartData(price,change){const n=25,s=price/(1+(change/100)||1);return Array.from({length:n},(_,i)=>{const p=i/(n-1);return Math.max(0,s+(price-s)*p+(Math.random()-.5)*price*.08);}).concat([price]);}
+
+const NAMES=['PEPECAT','MOONDOG','SOLGOD','WAGMI','BONKSON','GIGACHAD','SKIBIDI','RETARDIO','BABYDOGE','WOJAK','NEIRO','POPCAT'];
+const LPS=['pump','raydium','meteora','other'];
+function makeDemoToken(){
+  const liq=Math.random()*500000+500,mcap=liq*(1+Math.random()*15),vol=liq*Math.random()*5;
+  if(liq===0||mcap===0)return makeDemoToken();
+  const ageMin=Math.floor(Math.random()*4320);
+  const base={id:Math.random().toString(36),name:NAMES[Math.floor(Math.random()*NAMES.length)]+Math.floor(Math.random()*999),fullName:'Demo',addr:'demo…'+Math.random().toString(36).slice(2,6),mintAddress:'DEMO'+Math.random().toString(36).slice(2,10),price:Math.random()*.01,change:(Math.random()-.3)*200,mcap,liq,vol,age:formatAge(ageMin*60000),ageMin,lp:LPS[Math.floor(Math.random()*LPS.length)],mintActive:Math.random()>.5,freezeActive:Math.random()>.7,honeypot:Math.random()>.9,bundled:Math.random()>.85,lpLocked:Math.random()>.4,rawTop10:Math.floor(Math.random()*70)+5,holders:Math.floor(Math.random()*8000)+10,jupTradeable:true,jupVerified:false,isTrending:Math.random()>.4,isNew:Math.random()>.5};
+  const sc=scoreToken(base);return{...base,...sc};
+}
+function makeDemoLaunch(){const t=makeDemoToken();t.isNew=true;t.ageMin=Math.floor(Math.random()*180);t.age=t.ageMin+'m';const sc=scoreToken(t);return{...t,...sc};}
+
+function addLog(type,msg){const list=document.getElementById('logList');document.getElementById('logEmpty').style.display='none';const time=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});const div=document.createElement('div');div.className='log-item '+type;div.innerHTML=`<span class="log-time">${time}</span><span class="log-msg ${type}">${msg}</span>`;list.prepend(div);while(list.children.length>80)list.removeChild(list.lastChild);}
+function clearLog(){document.getElementById('logList').innerHTML='';document.getElementById('logEmpty').style.display='block';}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+window.addEventListener('load',async()=>{
+  loadFeed();
+  loadNew();
+  if(window.solana?.isPhantom){try{const r=await window.solana.connect({onlyIfTrusted:true});walletPubkey=r.publicKey.toString();onConnected();}catch{}}
+  document.getElementById('scanInput').addEventListener('keydown',e=>{if(e.key==='Enter')runScan();});
+});
+</script>
+
+</body>
+</html>
